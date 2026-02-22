@@ -16,13 +16,13 @@
 
 ### Phase 0: Project Scaffolding (Size: S — ~2 hours)
 
-- [ ] Initialize Next.js 15 with App Router, TypeScript strict mode
-- [ ] Install dependencies: Tailwind CSS, shadcn/ui, TanStack Query, Supabase client
-- [ ] Configure PWA (next-pwa or Serwist) with manifest.json
-- [ ] Set up Supabase project (Auth, Database, Edge Functions)
-- [ ] Configure Google Cloud Console (OAuth consent screen, Classroom API)
-- [ ] Set up environment variables (.env.local)
-- [ ] Create CI/CD: deploy to Vercel on push to `main`
+- [x] Initialize Next.js 15 with App Router, TypeScript strict mode
+- [x] Install dependencies: Tailwind CSS, shadcn/ui, TanStack Query, Supabase client
+- [x] Configure PWA (next-pwa or Serwist) with manifest.json
+- [x] Set up Supabase project (Auth, Database, Edge Functions)
+- [x] Configure Google Cloud Console (OAuth consent screen, Classroom API)
+- [x] Set up environment variables (.env.local)
+- [x] Create CI/CD: deploy to Vercel on push to `main`
 
 **Files:**
 
@@ -33,12 +33,12 @@ package.json, tsconfig.json, next.config.ts, tailwind.config.ts,
 
 ### Phase 1: Authentication & Onboarding (Size: M — ~4 hours)
 
-- [ ] Supabase Auth with Google OAuth (request classroom.\* scopes)
-- [ ] Auth middleware (protect dashboard routes)
-- [ ] Login page with "Sign in with Google" button
-- [ ] Onboarding flow: UVEC iCal URL input + instructions
-- [ ] Profile table migration + RLS policies
-- [ ] Store UVEC URL in profile, Google tokens in Supabase Auth
+- [x] Supabase Auth with Google OAuth (request classroom.\* scopes)
+- [x] Auth middleware (protect dashboard routes)
+- [x] Login page with "Sign in with Google" button
+- [x] Onboarding flow: UVEC iCal URL input + instructions
+- [x] Profile table migration + RLS policies
+- [x] Store UVEC URL in profile, Google tokens in Supabase Auth
 
 **Files:**
 
@@ -53,12 +53,12 @@ supabase/migrations/001_profiles.sql
 
 ### Phase 2: Data Ingestion — UVEC (Size: M — ~4 hours)
 
-- [ ] Supabase Edge Function: CORS proxy for iCal URL
-- [ ] iCal parser: .ics text → Task[] (using ical.js)
-- [ ] UVEC service: fetch + parse + normalize
-- [ ] Task + Course table migrations + RLS
-- [ ] Upsert logic (dedup by source + external_id)
-- [ ] Unit tests for iCal parser with sample .ics data
+- [x] Supabase Edge Function: CORS proxy for iCal URL
+- [x] iCal parser: .ics text → Task[] (using ical.js)
+- [x] UVEC service: fetch + parse + normalize
+- [x] Task + Course table migrations + RLS
+- [x] Upsert logic (dedup by source + external_id)
+- [x] Unit tests for iCal parser with sample .ics data
 
 **Files:**
 
