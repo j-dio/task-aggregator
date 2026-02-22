@@ -10,36 +10,34 @@ interface SyncEngineConfig {
   gclassroomToken: string;
 }
 
-export async function syncTasks(config?: SyncEngineConfig): Promise<Task[]> {
-  const results: Task[][] = [];
-  // Sync UVEC tasks
+  let uvecTasks: Task[] = [];
+  let gclassroomTasks: Task[] = [];
+
   try {
-    const uvecTasks = await getUVECTasks();
-    results.push(Array.isArray(uvecTasks) ? uvecTasks : []);
+    const fetched = await getUVECTasks();
+    uvecTasks = Array.isArray(fetched) ? [...fetched] : [];
   } catch {
-    results.push([]);
+    uvecTasks = [];
   }
-  // Sync Google Classroom tasks
+
   if (config?.gclassroomToken) {
     try {
       const gclassroom = new GClassroomService({ accessToken: config.gclassroomToken });
       const courses = await gclassroom.getCourses();
-      const allCourseWork: any[] = [];
+      const allCourseWork: unknown[] = [];
       for (const course of courses) {
         const courseWork = await gclassroom.getCourseWork(course.id);
         allCourseWork.push(...courseWork);
       }
-      const gclassroomTasks = parseGClassroomResponse({ courseWork: allCourseWork });
-      results.push(gclassroomTasks);
+      gclassroomTasks = parseGClassroomResponse({ courseWork: allCourseWork });
     } catch {
-      results.push([]);
+      gclassroomTasks = [];
     }
   }
+
   // Merge and deduplicate tasks by id
-  const merged = results.flat();
+  const merged = [...uvecTasks, ...gclassroomTasks];
   const uniqueTasks = Array.from(
     new Map(merged.map((t) => [t.id, t])).values()
   );
   return uniqueTasks;
-}
-}
