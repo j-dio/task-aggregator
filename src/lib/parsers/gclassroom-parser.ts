@@ -47,7 +47,7 @@ export const GClassroomAnnouncementSchema = z.object({
 
 // Convert Google Classroom courseWork array to Task[]
 export function parseGClassroomResponse(response: unknown): Task[] {
-  if (!response || typeof response !== 'object') return [];
+  if (!response || typeof response !== "object") return [];
   // Accepts { courseWork: [...] }
   const courseWorkArr = (response as { courseWork?: unknown[] }).courseWork;
   if (!Array.isArray(courseWorkArr)) return [];
@@ -59,11 +59,12 @@ export function parseGClassroomResponse(response: unknown): Task[] {
         return {
           id: cw.id,
           title: cw.title,
-          description: cw.description ?? '',
-          dueDate: cw.dueDate && cw.dueTime
-            ? `${cw.dueDate.year.toString().padStart(4, '0')}-${cw.dueDate.month.toString().padStart(2, '0')}-${cw.dueDate.day.toString().padStart(2, '0')}T${cw.dueTime.hours.toString().padStart(2, '0')}:${cw.dueTime.minutes.toString().padStart(2, '0')}:${cw.dueTime.seconds ? cw.dueTime.seconds.toString().padStart(2, '0') : '00'}`
-            : undefined,
-          source: 'google-classroom',
+          description: cw.description ?? "",
+          dueDate:
+            cw.dueDate && cw.dueTime
+              ? `${cw.dueDate.year.toString().padStart(4, "0")}-${cw.dueDate.month.toString().padStart(2, "0")}-${cw.dueDate.day.toString().padStart(2, "0")}T${cw.dueTime.hours.toString().padStart(2, "0")}:${cw.dueTime.minutes.toString().padStart(2, "0")}:${cw.dueTime.seconds ? cw.dueTime.seconds.toString().padStart(2, "0") : "00"}`
+              : undefined,
+          source: "google-classroom",
           courseId: cw.courseId,
         } as Task;
       } catch {
