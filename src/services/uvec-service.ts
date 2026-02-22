@@ -24,9 +24,31 @@ export async function ingestUvecTasks({
   userId,
 }: z.infer<typeof UvecServiceSchema>): Promise<Task[]> {
   UvecServiceSchema.parse({ icalUrl, userId });
-  const ics = await fetchUvecICal(icalUrl);
 
-  // TODO: Normalize courses, upsert tasks/courses in DB (dedup by source + external_id)
-  // This function returns parsed tasks for now
-  return parseICal(ics);
+  // Upsert logic: dedup by source + external_id
+  // Assumes Supabase client is available as supabase
+  // Upsert courses and tasks
+  // NOTE: This is a placeholder, adapt to your Supabase client import
+  // import { supabase } from '../lib/supabase/client';
+
+  // Example upsert for tasks
+  // await supabase.from('tasks').upsert(
+  //   parseICal(await fetchUvecICal(icalUrl)).map(t => ({
+  //     ...t,
+  //     user_id: userId,
+  //   })),
+  //   { onConflict: ['external_id', 'source', 'user_id'] }
+  // );
+
+  // Example upsert for courses (if course info is available)
+  // await supabase.from('courses').upsert(
+  //   courses.map(c => ({
+  //     ...c,
+  //     user_id: userId,
+  //   })),
+  //   { onConflict: ['external_id', 'source', 'user_id'] }
+  // );
+
+  // Return parsed tasks for now
+  return parseICal(await fetchUvecICal(icalUrl));
 }
