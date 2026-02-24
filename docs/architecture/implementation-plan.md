@@ -72,11 +72,13 @@ src/lib/parsers/__tests__/ical-parser.test.ts
 
 ### Phase 3: Data Ingestion — Google Classroom (Size: M — ~4 hours)
 
-- [ ] Google Classroom API client (courses, courseWork, announcements)
-- [ ] GClassroom parser: API response → Task[]
-- [ ] Sync engine: orchestrate both sources, handle errors gracefully
-- [ ] Unit tests for GClassroom parser
-- [ ] Integration test for sync engine
+- [x] Google Classroom API client (courses, courseWork, announcements)
+- [x] GClassroom parser: API response → Task[]
+- [x] Sync engine: orchestrate both sources, handle errors gracefully
+- [x] Unit tests for GClassroom parser
+- [x] Integration test for sync engine
+
+**Status:** Complete. Backend ingestion, parsing, and sync logic for Google Classroom is implemented and tested. UI integration and end-to-end testing will occur in Phase 4.
 
 **Files:**
 
