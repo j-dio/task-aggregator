@@ -9,9 +9,7 @@ export type TaskType =
 
 export type TaskStatus =
   | "pending"
-  | "submitted"
-  | "graded"
-  | "overdue"
+  | "done"
   | "dismissed";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
@@ -61,6 +59,21 @@ export interface ParsedTask {
   courseExternalId: string | null;
   url: string | null;
 }
+
+/**
+ * Task with its associated course data (from Supabase join).
+ */
+export interface TaskWithCourse extends Task {
+  course: Course | null;
+}
+
+export type TaskUrgency =
+  | "overdue"
+  | "urgent"
+  | "soon"
+  | "upcoming"
+  | "later"
+  | "none";
 
 export interface TaskOverride {
   id: string;

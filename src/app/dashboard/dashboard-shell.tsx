@@ -1,8 +1,10 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
-import { signOut } from "@/lib/actions/auth";
+import { useState, type ReactNode } from "react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { SidebarNav } from "@/components/sidebar-nav";
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -17,66 +19,60 @@ export function DashboardShell({
   email,
   hasUvec,
 }: DashboardShellProps) {
-  const [isPending, startTransition] = useTransition();
-
-  function handleSignOut() {
-    startTransition(async () => {
-      await signOut();
-    });
-  }
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
-      {/* Top navigation bar */}
-      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
-              <span className="text-sm font-bold text-zinc-50 dark:text-zinc-900">
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r bg-sidebar">
+        <SidebarNav
+          displayName={displayName}
+          email={email}
+          hasUvec={hasUvec}
+        />
+      </aside>
+
+      {/* Mobile sidebar */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-60 p-0 bg-sidebar">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarNav
+            displayName={displayName}
+            email={email}
+            hasUvec={hasUvec}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Main content */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Mobile header */}
+        <header className="flex h-14 items-center gap-3 border-b px-4 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="size-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-md bg-primary">
+              <span className="text-[10px] font-bold text-primary-foreground">
                 TA
               </span>
             </div>
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Task Aggregator
-            </span>
+            <span className="text-sm font-semibold">Task Aggregator</span>
           </div>
+        </header>
 
-          <div className="flex items-center gap-4">
-            {!hasUvec && (
-              <a
-                href="/onboarding"
-                className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
-              >
-                Connect UVEC
-              </a>
-            )}
-
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {displayName}
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {email}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                disabled={isPending}
-              >
-                {isPending ? "..." : "Sign Out"}
-              </Button>
-            </div>
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8">
+            {children}
           </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-        {children}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <LoginCard error={params.error} />
     </div>
   );
