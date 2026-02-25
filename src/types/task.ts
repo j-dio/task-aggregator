@@ -62,6 +62,21 @@ export interface ParsedTask {
   url: string | null;
 }
 
+/**
+ * Task with its associated course data (from Supabase join).
+ */
+export interface TaskWithCourse extends Task {
+  course: Course | null;
+}
+
+export type TaskUrgency =
+  | "overdue"
+  | "urgent"
+  | "soon"
+  | "upcoming"
+  | "later"
+  | "none";
+
 export interface TaskOverride {
   id: string;
   userId: string;
