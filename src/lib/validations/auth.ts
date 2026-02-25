@@ -15,7 +15,20 @@ export const uvecIcalUrlSchema = z
     (url) =>
       url.includes("calendar/export") || url.includes("export_execute.php"),
     "This doesn't look like a UVEC iCal export URL. Please follow the instructions above.",
-  );
+  )
+  .refine((url) => {
+    try {
+      const { hostname } = new URL(url);
+      return (
+        hostname.endsWith(".edu") ||
+        hostname.endsWith(".edu.ph") ||
+        hostname.includes("uvec") ||
+        hostname.includes("moodle")
+      );
+    } catch {
+      return false;
+    }
+  }, "URL must be from your university's UVEC/Moodle server");
 
 /**
  * Schema for onboarding form data.

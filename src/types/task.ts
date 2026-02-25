@@ -47,6 +47,21 @@ export interface Course {
   createdAt: string;
 }
 
+/**
+ * Intermediate type returned by parsers before DB insertion.
+ * Does not include DB-generated fields (id, userId, timestamps).
+ */
+export interface ParsedTask {
+  externalId: string;
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  type: TaskType;
+  source: TaskSource;
+  courseExternalId: string | null;
+  url: string | null;
+}
+
 export interface TaskOverride {
   id: string;
   userId: string;

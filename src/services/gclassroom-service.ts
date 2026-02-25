@@ -1,14 +1,16 @@
 // Google Classroom API client for Task Aggregator
-// Phase 3: Scaffolding only
 
-// Removed unused z import
+import { z } from "zod";
 import {
   GClassroomCourseSchema,
   GClassroomCourseWorkSchema,
   GClassroomAnnouncementSchema,
 } from "../lib/parsers/gclassroom-parser";
 
-// Placeholder for Google Classroom API endpoints
+type GClassroomCourse = z.infer<typeof GClassroomCourseSchema>;
+type GClassroomCourseWork = z.infer<typeof GClassroomCourseWorkSchema>;
+type GClassroomAnnouncement = z.infer<typeof GClassroomAnnouncementSchema>;
+
 interface GClassroomApiConfig {
   accessToken: string;
 }
@@ -23,20 +25,18 @@ export class GClassroomService {
   }
 
   private async fetch<T>(endpoint: string): Promise<T> {
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      });
-      if (!res.ok) {
-        throw new Error(`Google Classroom API error: ${res.status}`);
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+      },
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("GOOGLE_TOKEN_EXPIRED");
       }
-      return await res.json();
-    } catch {
-      // Do not expose internal error details
-      throw new Error("Failed to fetch Google Classroom data");
+      throw new Error(`Google Classroom API error: ${res.status}`);
     }
+    return await res.json();
   }
 
   async getCourses(): Promise<GClassroomCourse[]> {
@@ -85,5 +85,3 @@ export class GClassroomService {
       .filter(Boolean) as GClassroomAnnouncement[];
   }
 }
-
-// Zod schemas will be added in a later commit

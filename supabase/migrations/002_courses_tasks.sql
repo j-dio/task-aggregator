@@ -7,9 +7,10 @@ CREATE TABLE courses (
   user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
   name text NOT NULL,
   external_id text NOT NULL,
-  source text NOT NULL CHECK (source IN ('UVEC', 'GClassroom')),
+  source text NOT NULL CHECK (source IN ('uvec', 'gclassroom')),
   color text,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT uq_courses_user_ext_source UNIQUE(user_id, external_id, source)
 );
 
 -- Tasks table
@@ -20,11 +21,14 @@ CREATE TABLE tasks (
   title text NOT NULL,
   description text,
   due_date timestamptz,
-  type text CHECK (type IN ('assignment', 'quiz', 'exam', 'event')),
+  type text CHECK (type IN ('assignment', 'quiz', 'exam', 'event', 'announcement')),
   status text DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'dismissed')),
   external_id text NOT NULL,
-  source text NOT NULL CHECK (source IN ('UVEC', 'GClassroom')),
-  created_at timestamptz DEFAULT now()
+  source text NOT NULL CHECK (source IN ('uvec', 'gclassroom')),
+  url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT uq_tasks_user_ext_source UNIQUE(user_id, external_id, source)
 );
 
 -- RLS policies
@@ -53,10 +57,12 @@ CREATE POLICY "Tasks: user can delete own" ON tasks
 
 -- Indexes for performance
 CREATE INDEX idx_courses_user_id ON courses(user_id);
-CREATE INDEX idx_courses_external_id_source ON courses(external_id, source);
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
 CREATE INDEX idx_tasks_course_id ON tasks(course_id);
-CREATE INDEX idx_tasks_external_id_source ON tasks(external_id, source);
-CREATE INDEX idx_tasks_due_date ON tasks(due_date);
+
+-- Composite indexes for dashboard queries
+CREATE INDEX idx_tasks_user_due ON tasks(user_id, due_date);
+CREATE INDEX idx_tasks_user_status ON tasks(user_id, status);
+CREATE INDEX idx_tasks_user_source ON tasks(user_id, source);
 
 -- End of migration

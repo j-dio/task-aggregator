@@ -1,8 +1,6 @@
 // Unit tests for Google Classroom parser
-// Phase 3: Scaffolding only
 
 import { parseGClassroomResponse } from "../gclassroom-parser";
-import { Task } from "../../../types/task";
 
 describe("parseGClassroomResponse", () => {
   it("should parse valid courseWork array", () => {
@@ -17,16 +15,17 @@ describe("parseGClassroomResponse", () => {
         courseId: "c1",
       },
     ];
-    // Should return Task[] with mapped fields
     const result = parseGClassroomResponse({ courseWork });
     expect(result).toEqual([
       {
-        id: "cw1",
+        externalId: "cw1",
         title: "Assignment 1",
         description: "Read chapter 1",
         dueDate: "2026-02-25T23:59:00",
-        source: "google-classroom",
-        courseId: "c1",
+        type: "assignment",
+        source: "gclassroom",
+        courseExternalId: "c1",
+        url: null,
       },
     ]);
   });
@@ -39,5 +38,19 @@ describe("parseGClassroomResponse", () => {
   it("should handle empty courseWork array", () => {
     const result = parseGClassroomResponse({ courseWork: [] });
     expect(result).toEqual([]);
+  });
+
+  it("should handle courseWork without due date", () => {
+    const courseWork = [
+      {
+        id: "cw2",
+        title: "Assignment 2",
+        state: "PUBLISHED",
+        courseId: "c1",
+      },
+    ];
+    const result = parseGClassroomResponse({ courseWork });
+    expect(result).toHaveLength(1);
+    expect(result[0].dueDate).toBeNull();
   });
 });
