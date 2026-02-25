@@ -1,69 +1,101 @@
-// src/lib/parsers/ical-parser.ts
-// UVEC iCal parser: .ics text → Task[]
+// UVEC iCal parser: .ics text -> ParsedTask[]
 // Uses ical.js for parsing
-// Conventions: Immutability, Zod validation, no console.log
 
 import { z } from "zod";
-// @ts-expect-error: ical.js is a JS library, import as default
+import type { ParsedTask, TaskType } from "../../types/task";
 import ical from "ical.js";
 
-const TaskSchema = z.object({
+const MAX_ICAL_SIZE = 5 * 1024 * 1024; // 5MB
+
+const ICalEventSchema = z.object({
   external_id: z.string(),
   title: z.string(),
   description: z.string().optional(),
   due_date: z.string(),
   type: z.enum(["assignment", "quiz", "exam", "event"]),
-  source: z.literal("UVEC"),
 });
 
-export type Task = z.infer<typeof TaskSchema>;
-
-function normalizeType(category: string | undefined): Task["type"] {
+function normalizeType(category: string | undefined): TaskType {
   if (!category) return "event";
-  if (["assignment", "quiz", "exam", "event"].includes(category)) {
-    return category as Task["type"];
+  const lower = category.toLowerCase();
+  if (
+    lower === "assignment" ||
+    lower === "quiz" ||
+    lower === "exam" ||
+    lower === "event"
+  ) {
+    return lower as TaskType;
   }
   return "event";
 }
 
-export function parseICal(ics: string): Task[] {
+export interface ICalParseResult {
+  tasks: ParsedTask[];
+  errors: string[];
+}
+
+export function parseICal(ics: string): ICalParseResult {
+  const errors: string[] = [];
+
+  if (ics.length > MAX_ICAL_SIZE) {
+    return { tasks: [], errors: ["iCal file exceeds 5MB size limit"] };
+  }
+
+  if (!ics.trim()) {
+    return { tasks: [], errors: [] };
+  }
+
   try {
     const jcal = ical.parse(ics);
     const comp = new ical.Component(jcal);
     const events = comp.getAllSubcomponents("vevent");
-    return events
-      .map((ev) => {
-        const uid = ev.getFirstPropertyValue("uid");
-        const summary = ev.getFirstPropertyValue("summary");
-        const description = ev.getFirstPropertyValue("description");
-        const dtstart = ev.getFirstPropertyValue("dtstart");
-        const category = ev.getFirstPropertyValue("categories");
-        if (!uid || !summary || !dtstart) return null;
-        return TaskSchema.safeParse({
-          external_id: String(uid),
-          title: String(summary),
-          description: description ? String(description) : undefined,
-          due_date: typeof dtstart === "string" ? dtstart : dtstart.toString(),
-          type: normalizeType(
-            category ? String(category).toLowerCase() : undefined,
-          ),
-          source: "UVEC",
-        }).success
-          ? {
-              external_id: String(uid),
-              title: String(summary),
-              description: description ? String(description) : undefined,
-              due_date:
-                typeof dtstart === "string" ? dtstart : dtstart.toString(),
-              type: normalizeType(
-                category ? String(category).toLowerCase() : undefined,
-              ),
-              source: "UVEC",
-            }
-          : null;
-      })
-      .filter((t): t is Task => !!t);
-  } catch {
-    return [];
+    const tasks: ParsedTask[] = [];
+
+    for (const ev of events) {
+      const uid = ev.getFirstPropertyValue("uid");
+      const summary = ev.getFirstPropertyValue("summary");
+      const description = ev.getFirstPropertyValue("description");
+      const dtstart = ev.getFirstPropertyValue("dtstart");
+      const category = ev.getFirstPropertyValue("categories");
+
+      if (!uid || !summary || !dtstart) {
+        errors.push("Skipped event: missing uid/summary/dtstart");
+        continue;
+      }
+
+      const parsed = ICalEventSchema.safeParse({
+        external_id: String(uid),
+        title: String(summary),
+        description: description ? String(description) : undefined,
+        due_date: typeof dtstart === "string" ? dtstart : dtstart.toString(),
+        type: normalizeType(
+          category ? String(category).toLowerCase() : undefined,
+        ),
+      });
+
+      if (parsed.success) {
+        tasks.push({
+          externalId: parsed.data.external_id,
+          title: parsed.data.title,
+          description: parsed.data.description ?? null,
+          dueDate: parsed.data.due_date,
+          type: parsed.data.type,
+          source: "uvec",
+          courseExternalId: null,
+          url: null,
+        });
+      } else {
+        errors.push(`Skipped event ${uid}: validation failed`);
+      }
+    }
+
+    return { tasks, errors };
+  } catch (err) {
+    return {
+      tasks: [],
+      errors: [
+        `iCal parse error: ${err instanceof Error ? err.message : "Unknown error"}`,
+      ],
+    };
   }
 }

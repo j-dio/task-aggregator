@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { uvecIcalUrlSchema } from "@/lib/validations/auth";
 
 /**
  * Initiates Google OAuth sign-in via Supabase Auth.
@@ -53,6 +54,12 @@ export async function signOut() {
  * Saves the UVEC iCal URL to the user's profile during onboarding.
  */
 export async function saveUvecIcalUrl(uvecIcalUrl: string) {
+  // Server-side validation (client-side can be bypassed)
+  const validated = uvecIcalUrlSchema.safeParse(uvecIcalUrl);
+  if (!validated.success) {
+    return { error: "Invalid UVEC iCal URL" };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -65,7 +72,7 @@ export async function saveUvecIcalUrl(uvecIcalUrl: string) {
 
   const { error } = await supabase
     .from("profiles")
-    .update({ uvec_ical_url: uvecIcalUrl })
+    .update({ uvec_ical_url: validated.data })
     .eq("id", user.id);
 
   if (error) {

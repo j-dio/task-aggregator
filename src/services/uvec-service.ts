@@ -1,8 +1,8 @@
-// src/services/uvec-service.ts
 // UVEC service: fetch, parse, normalize, upsert tasks
-// Conventions: Immutability, Zod validation, no console.log
 
-import { parseICal, Task } from "../lib/parsers/ical-parser";
+import { parseICal } from "../lib/parsers/ical-parser";
+import { createClient } from "../lib/supabase/client";
+import type { ParsedTask } from "../types/task";
 import { z } from "zod";
 
 const UvecServiceSchema = z.object({
@@ -12,9 +12,8 @@ const UvecServiceSchema = z.object({
 
 export async function fetchUvecICal(icalUrl: string): Promise<string> {
   // Use Supabase Edge Function proxy for CORS
-  const resp = await fetch(
-    `/functions/uvec-proxy?icalUrl=${encodeURIComponent(icalUrl)}`,
-  );
+  const proxyUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/uvec-proxy?icalUrl=${encodeURIComponent(icalUrl)}`;
+  const resp = await fetch(proxyUrl);
   if (!resp.ok) throw new Error("Failed to fetch UVEC iCal");
   return await resp.text();
 }
@@ -22,33 +21,40 @@ export async function fetchUvecICal(icalUrl: string): Promise<string> {
 export async function ingestUvecTasks({
   icalUrl,
   userId,
-}: z.infer<typeof UvecServiceSchema>): Promise<Task[]> {
+}: z.infer<typeof UvecServiceSchema>): Promise<ParsedTask[]> {
   UvecServiceSchema.parse({ icalUrl, userId });
 
-  // Upsert logic: dedup by source + external_id
-  // Assumes Supabase client is available as supabase
-  // Upsert courses and tasks
-  // NOTE: This is a placeholder, adapt to your Supabase client import
-  // import { supabase } from '../lib/supabase/client';
+  const icsText = await fetchUvecICal(icalUrl);
+  const { tasks, errors } = parseICal(icsText);
 
-  // Example upsert for tasks
-  // await supabase.from('tasks').upsert(
-  //   parseICal(await fetchUvecICal(icalUrl)).map(t => ({
-  //     ...t,
-  //     user_id: userId,
-  //   })),
-  //   { onConflict: ['external_id', 'source', 'user_id'] }
-  // );
+  if (tasks.length === 0) {
+    if (errors.length > 0) {
+      throw new Error(`UVEC parse failed: ${errors[0]}`);
+    }
+    return [];
+  }
 
-  // Example upsert for courses (if course info is available)
-  // await supabase.from('courses').upsert(
-  //   courses.map(c => ({
-  //     ...c,
-  //     user_id: userId,
-  //   })),
-  //   { onConflict: ['external_id', 'source', 'user_id'] }
-  // );
+  // Upsert tasks to database
+  const supabase = createClient();
+  const taskRows = tasks.map((t) => ({
+    user_id: userId,
+    external_id: t.externalId,
+    title: t.title,
+    description: t.description,
+    due_date: t.dueDate,
+    type: t.type,
+    source: t.source,
+    status: "pending",
+  }));
 
-  // Return parsed tasks for now
-  return parseICal(await fetchUvecICal(icalUrl));
+  const { error } = await supabase.from("tasks").upsert(taskRows, {
+    onConflict: "user_id,external_id,source",
+    ignoreDuplicates: false,
+  });
+
+  if (error) {
+    throw new Error(`Failed to upsert UVEC tasks: ${error.message}`);
+  }
+
+  return tasks;
 }

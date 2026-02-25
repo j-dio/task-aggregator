@@ -1,8 +1,6 @@
 // TDD: iCal parser tests for UVEC ingestion
-// src/lib/parsers/__tests__/ical-parser.test.ts
 
 import { parseICal } from "../ical-parser";
-import { z } from "zod";
 
 const sampleICS = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -24,40 +22,44 @@ CATEGORIES:quiz
 END:VEVENT
 END:VCALENDAR`;
 
-const TaskSchema = z.object({
-  external_id: z.string(),
-  title: z.string(),
-  description: z.string().optional(),
-  due_date: z.string(),
-  type: z.enum(["assignment", "quiz", "exam", "event"]),
-  source: z.literal("UVEC"),
-});
-
 describe("parseICal", () => {
-  it("parses .ics text into Task[]", () => {
-    const tasks = parseICal(sampleICS);
-    expect(Array.isArray(tasks)).toBe(true);
-    expect(tasks.length).toBe(2);
-    tasks.forEach((task) => {
-      TaskSchema.parse(task);
-      expect(task.source).toBe("UVEC");
-    });
+  it("parses .ics text into ParsedTask[]", () => {
+    const { tasks, errors } = parseICal(sampleICS);
+    expect(tasks).toHaveLength(2);
+    expect(errors).toHaveLength(0);
+
     expect(tasks[0]).toMatchObject({
-      external_id: "12345",
+      externalId: "12345",
       title: "Assignment 1",
       description: "Complete the worksheet",
       type: "assignment",
+      source: "uvec",
     });
     expect(tasks[1]).toMatchObject({
-      external_id: "67890",
+      externalId: "67890",
       title: "Quiz 1",
       description: "Online quiz",
       type: "quiz",
+      source: "uvec",
     });
   });
 
-  it("returns empty array for invalid .ics", () => {
-    const tasks = parseICal("INVALID DATA");
-    expect(tasks).toEqual([]);
+  it("returns errors for invalid .ics", () => {
+    const { tasks, errors } = parseICal("INVALID DATA");
+    expect(tasks).toHaveLength(0);
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it("returns empty tasks for empty string", () => {
+    const { tasks, errors } = parseICal("");
+    expect(tasks).toHaveLength(0);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("rejects oversized input", () => {
+    const huge = "X".repeat(6 * 1024 * 1024);
+    const { tasks, errors } = parseICal(huge);
+    expect(tasks).toHaveLength(0);
+    expect(errors[0]).toContain("5MB");
   });
 });

@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { createServerClient } from "@supabase/ssr";
 
 /**
  * Public routes that don't require authentication.
@@ -13,36 +12,14 @@ const PUBLIC_ROUTES = new Set(["/", "/login", "/auth/callback"]);
 const AUTH_ONLY_ROUTES = new Set(["/login"]);
 
 export async function proxy(request: NextRequest) {
-  // First, refresh the session
-  const response = await updateSession(request);
+  // Refresh the session and get auth state in a single call
+  const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
   // Skip auth checks for public assets and API routes
   if (pathname.startsWith("/api/") || pathname.startsWith("/auth/")) {
     return response;
   }
-
-  // Create a Supabase client to check auth state
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-        },
-      },
-    },
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.has(pathname);

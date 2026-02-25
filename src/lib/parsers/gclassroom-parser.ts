@@ -1,8 +1,7 @@
 // Google Classroom parser for Task Aggregator
-// Phase 3: Scaffolding only
 
 import { z } from "zod";
-import { Task } from "../../types/task";
+import type { ParsedTask } from "../../types/task";
 
 // Zod schemas for Google Classroom API responses
 export const GClassroomCourseSchema = z.object({
@@ -34,6 +33,7 @@ export const GClassroomCourseWorkSchema = z.object({
     .optional(),
   state: z.string(),
   courseId: z.string(),
+  alternateLink: z.string().optional(),
   assignment: z.any().optional(),
 });
 
@@ -45,33 +45,42 @@ export const GClassroomAnnouncementSchema = z.object({
   state: z.string(),
 });
 
-// Convert Google Classroom courseWork array to Task[]
-export function parseGClassroomResponse(response: unknown): Task[] {
+function formatDueDate(
+  dueDate: { year: number; month: number; day: number },
+  dueTime?: { hours: number; minutes: number; seconds?: number },
+): string {
+  const y = dueDate.year.toString().padStart(4, "0");
+  const m = dueDate.month.toString().padStart(2, "0");
+  const d = dueDate.day.toString().padStart(2, "0");
+  if (!dueTime) return `${y}-${m}-${d}`;
+  const h = dueTime.hours.toString().padStart(2, "0");
+  const min = dueTime.minutes.toString().padStart(2, "0");
+  const s = (dueTime.seconds ?? 0).toString().padStart(2, "0");
+  return `${y}-${m}-${d}T${h}:${min}:${s}`;
+}
+
+// Convert Google Classroom courseWork array to ParsedTask[]
+export function parseGClassroomResponse(response: unknown): ParsedTask[] {
   if (!response || typeof response !== "object") return [];
-  // Accepts { courseWork: [...] }
   const courseWorkArr = (response as { courseWork?: unknown[] }).courseWork;
   if (!Array.isArray(courseWorkArr)) return [];
   return courseWorkArr
-    .map((item) => {
+    .map((item): ParsedTask | null => {
       try {
         const cw = GClassroomCourseWorkSchema.parse(item);
-        // Map to Task type
         return {
-          id: cw.id,
+          externalId: cw.id,
           title: cw.title,
-          description: cw.description ?? "",
-          dueDate:
-            cw.dueDate && cw.dueTime
-              ? `${cw.dueDate.year.toString().padStart(4, "0")}-${cw.dueDate.month.toString().padStart(2, "0")}-${cw.dueDate.day.toString().padStart(2, "0")}T${cw.dueTime.hours.toString().padStart(2, "0")}:${cw.dueTime.minutes.toString().padStart(2, "0")}:${cw.dueTime.seconds ? cw.dueTime.seconds.toString().padStart(2, "0") : "00"}`
-              : undefined,
-          source: "google-classroom",
-          courseId: cw.courseId,
-        } as Task;
+          description: cw.description ?? null,
+          dueDate: cw.dueDate ? formatDueDate(cw.dueDate, cw.dueTime) : null,
+          type: "assignment",
+          source: "gclassroom",
+          courseExternalId: cw.courseId,
+          url: cw.alternateLink ?? null,
+        };
       } catch {
         return null;
       }
     })
-    .filter(Boolean) as Task[];
+    .filter((t): t is ParsedTask => t !== null);
 }
-
-// Zod schemas will be added in a later commit
