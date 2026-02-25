@@ -62,8 +62,8 @@ export function LoginCard({ error }: { error?: string }) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 dark:bg-zinc-100">
-          <span className="text-2xl font-bold text-zinc-50 dark:text-zinc-900">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary">
+          <span className="text-2xl font-bold text-primary-foreground">
             TA
           </span>
         </div>
@@ -74,7 +74,7 @@ export function LoginCard({ error }: { error?: string }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {errorMessage && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {errorMessage}
           </div>
         )}
@@ -90,7 +90,7 @@ export function LoginCard({ error }: { error?: string }) {
           {isPending ? "Redirecting..." : "Sign in with Google"}
         </Button>
 
-        <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-center text-xs text-muted-foreground">
           We&apos;ll request access to your Google Classroom courses to
           aggregate your tasks. Your data stays private.
         </p>

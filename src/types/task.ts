@@ -9,9 +9,7 @@ export type TaskType =
 
 export type TaskStatus =
   | "pending"
-  | "submitted"
-  | "graded"
-  | "overdue"
+  | "done"
   | "dismissed";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
