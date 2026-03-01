@@ -5,16 +5,18 @@ import { useSearchParams } from "next/navigation";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
 import { useSync } from "@/hooks/use-sync";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { TaskBoard } from "@/components/task-board";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
+import { ViewToggle } from "@/components/view-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClipboardList } from "lucide-react";
 
 function TodayViewContent() {
   const searchParams = useSearchParams();
-  const { mutate: sync } = useSync();
+  const { mutate: sync, isPending: isSyncing } = useSync();
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
@@ -27,14 +29,32 @@ function TodayViewContent() {
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(filters);
   const { data: courses } = useCourses();
+  const { bind, pullDistance, isReady } = usePullToRefresh({
+    onRefresh: async () => {
+      sync();
+    },
+    disabled: isSyncing,
+  });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" {...bind}>
+      <div className="lg:hidden" aria-live="polite">
+        <p className="text-muted-foreground text-center text-xs">
+          {isSyncing
+            ? "Syncing..."
+            : pullDistance > 0
+              ? isReady
+                ? "Release to sync"
+                : "Pull to refresh"
+              : ""}
+        </p>
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Today</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Your tasks organized by urgency.
           </p>
         </div>
@@ -42,6 +62,8 @@ function TodayViewContent() {
           <SyncButton />
         </div>
       </div>
+
+      <ViewToggle />
 
       {/* Filters */}
       <FilterBar courses={courses ?? []} />

@@ -5,10 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
+import { useSync } from "@/hooks/use-sync";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { TaskList } from "@/components/task-list";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
+import { ViewToggle } from "@/components/view-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,6 +27,7 @@ import type { TaskWithCourse } from "@/types/task";
 function WeekViewContent() {
   const searchParams = useSearchParams();
   const [weekOffset, setWeekOffset] = useState(0);
+  const { mutate: sync, isPending: isSyncing } = useSync();
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
@@ -36,6 +40,12 @@ function WeekViewContent() {
 
   const { data: tasks, isLoading } = useTasks(filters);
   const { data: courses } = useCourses();
+  const { bind, pullDistance, isReady } = usePullToRefresh({
+    onRefresh: async () => {
+      sync();
+    },
+    disabled: isSyncing,
+  });
 
   const today = new Date();
   const baseDate = new Date(today);
@@ -57,7 +67,19 @@ function WeekViewContent() {
   const weekLabel = `${days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" {...bind}>
+      <div className="lg:hidden" aria-live="polite">
+        <p className="text-muted-foreground text-center text-xs">
+          {isSyncing
+            ? "Syncing..."
+            : pullDistance > 0
+              ? isReady
+                ? "Release to sync"
+                : "Pull to refresh"
+              : ""}
+        </p>
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
@@ -68,6 +90,8 @@ function WeekViewContent() {
           <SyncButton />
         </div>
       </div>
+
+      <ViewToggle />
 
       {/* Filters */}
       <FilterBar courses={courses ?? []} />
