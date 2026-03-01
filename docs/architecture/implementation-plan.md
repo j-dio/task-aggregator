@@ -92,32 +92,51 @@ src/lib/__tests__/sync-engine.test.ts
 
 ### Phase 4: Dashboard UI (Size: L — ~6 hours)
 
-- [ ] Dashboard layout (nav, sidebar, responsive)
-- [ ] Today view: tasks due today + overdue, sorted by deadline
-- [ ] Week view: tasks grouped by day
-- [ ] Task card component: title, course badge, due countdown, source icon
-- [ ] Task detail modal/page: description, link to source, notes
-- [ ] Filter bar: by course, source, type, status
-- [ ] Empty states: "No tasks due!" illustration
-- [ ] Sync button with loading state
-- [ ] Pull-to-refresh on mobile
+- [x] Design tokens — indigo/blue OKLch palette, semantic tokens (success/warning/info), sidebar tokens, chart colors in `globals.css`
+- [x] Install shadcn/ui components — tabs, dialog, skeleton, separator, tooltip, dropdown-menu, scroll-area, sheet, avatar, select
+- [x] Dashboard layout — sidebar (desktop) + sheet drawer (mobile), `dashboard-shell.tsx` rewritten, `layout.tsx` updated
+- [x] Today view — board with urgency columns (Overdue / Due Today / This Week / Later), `Suspense` boundary for `useSearchParams`
+- [x] Week view — 7-day columns, prev/next week navigation, `dashboard/week/page.tsx`
+- [x] Task card component — urgency left-border, course badge, countdown, source icon, opens detail modal
+- [x] Task detail modal — full title, description, course, due date, source link, type/status
+- [x] Filter bar — course, source, type filters persisted in URL search params
+- [x] Empty states — `empty-state.tsx` with Lucide icon, title, description, optional CTA
+- [x] Sync button — spins during sync, invalidates TanStack Query caches on success
+- [x] Data hooks — `use-tasks.ts`, `use-courses.ts`, `use-sync.ts`
+- [x] Server action — `src/lib/actions/sync.ts` (upserts courses then tasks, handles Google token, returns `{ synced, errors }`)
+- [x] Utility functions — `getTaskUrgency`, `groupTasksByUrgency`, `groupTasksByDay`, `getCourseColor`, `getWeekStart`, `getWeekDays`, `formatDayLabel`, `isSameDay` added to `utils.ts`
+- [x] Types — `TaskWithCourse`, `TaskUrgency`, `TaskOverride` added to `task.ts`; `ParsedTask` intermediate type used by both parsers
+- [x] UI components — `course-badge.tsx`, `countdown-badge.tsx`, `source-icon.tsx`, `sidebar-nav.tsx`, `task-board.tsx`, `task-list.tsx`, `task-filters.tsx`, `task-detail-modal.tsx` all created
+- [x] Dark mode — dark mode detection script in `layout.tsx`, semantic tokens used throughout
+- [x] Bug fix — `use-tasks.ts` was overriding QueryProvider globals with `staleTime: 60s` and `refetchOnWindowFocus: true` (regression from scalability fix); removed to defer to global `staleTime: 5min` / `refetchOnWindowFocus: false`
+- [x] `view-toggle.tsx` — mobile segmented Today/Week switcher
+- [x] `use-pull-to-refresh.ts` — touch gesture hook for mobile pull-to-refresh
+- [x] Landing page, login, onboarding — verified all zinc-\* references replaced with semantic tokens
 
 **Files:**
 
 ```
-src/app/(dashboard)/layout.tsx
-src/app/(dashboard)/page.tsx
-src/app/(dashboard)/week/page.tsx
+src/app/dashboard/layout.tsx
+src/app/dashboard/page.tsx
+src/app/dashboard/week/page.tsx
+src/app/dashboard/dashboard-shell.tsx
 src/components/task-card.tsx
+src/components/task-board.tsx
 src/components/task-list.tsx
 src/components/task-filters.tsx
+src/components/task-detail-modal.tsx
 src/components/course-badge.tsx
 src/components/countdown-badge.tsx
+src/components/source-icon.tsx
 src/components/sync-button.tsx
 src/components/empty-state.tsx
+src/components/sidebar-nav.tsx
+src/components/view-toggle.tsx
 src/hooks/use-tasks.ts
 src/hooks/use-courses.ts
 src/hooks/use-sync.ts
+src/hooks/use-pull-to-refresh.ts
+src/lib/actions/sync.ts
 ```
 
 ### Phase 5: Task Management (Size: M — ~3 hours)
