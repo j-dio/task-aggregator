@@ -2,7 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { TaskWithCourse, TaskSource, TaskType, TaskStatus } from "@/types/task";
+import type {
+  TaskWithCourse,
+  TaskSource,
+  TaskType,
+  TaskStatus,
+} from "@/types/task";
 
 export interface TaskFilters {
   source?: TaskSource;
@@ -75,7 +80,7 @@ export function useTasks(filters: TaskFilters = {}) {
   return useQuery({
     queryKey: ["tasks", filters],
     queryFn: () => fetchTasks(filters),
-    staleTime: 60_000,
-    refetchOnWindowFocus: true,
+    // Use global QueryProvider defaults (5 min staleTime, no refetchOnWindowFocus)
+    // to avoid load spikes at scale — do not override here
   });
 }
