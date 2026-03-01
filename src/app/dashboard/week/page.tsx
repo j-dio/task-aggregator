@@ -62,9 +62,7 @@ function WeekViewContent() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Week</h1>
-          <p className="text-sm text-muted-foreground">
-            Tasks grouped by day.
-          </p>
+          <p className="text-muted-foreground text-sm">Tasks grouped by day.</p>
         </div>
         <div className="hidden lg:block">
           <SyncButton />
@@ -84,7 +82,7 @@ function WeekViewContent() {
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="text-sm font-medium min-w-[140px] text-center">
+        <span className="min-w-35 text-center text-sm font-medium">
           {weekLabel}
         </span>
         <Button
@@ -118,17 +116,15 @@ function WeekViewContent() {
           ))}
         </div>
       ) : (
-        <ScrollArea className="-mx-4 px-4 lg:-mx-0 lg:px-0">
-          <div className="flex gap-3 pb-4 min-w-max lg:min-w-0">
+        <ScrollArea className="-mx-4 px-4 lg:mx-0 lg:px-0">
+          <div className="flex min-w-max gap-3 pb-4 lg:min-w-0">
             {days.map((day) => {
               const dayTasks = getTasksForDay(day, tasks ?? []);
               const isToday = isSameDay(day, today);
               return (
                 <div
                   key={day.toISOString()}
-                  className={cn(
-                    "w-[220px] shrink-0 lg:flex-1 lg:min-w-[160px]",
-                  )}
+                  className={cn("w-55 shrink-0 lg:min-w-40 lg:flex-1")}
                 >
                   {/* Day header */}
                   <div
@@ -139,7 +135,7 @@ function WeekViewContent() {
                   >
                     <span>{formatDayLabel(day)}</span>
                     {dayTasks.length > 0 && (
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
+                      <span className="bg-muted rounded-full px-1.5 py-0.5 text-[10px]">
                         {dayTasks.length}
                       </span>
                     )}
@@ -149,7 +145,7 @@ function WeekViewContent() {
                   {dayTasks.length > 0 ? (
                     <TaskList tasks={dayTasks} />
                   ) : (
-                    <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                    <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-xs">
                       —
                     </div>
                   )}
