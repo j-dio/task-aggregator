@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { dueDateAndTimeToIso, isoToLocalDueParts } from "@/lib/due-date-input";
 
 const TASK_TYPES: { value: TaskType; label: string }[] = [
   { value: "assignment", label: "Assignment" },
@@ -43,24 +44,12 @@ export interface CustomTaskModalProps {
   task?: TaskWithCourse;
 }
 
-function toLocalDatetimeValue(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  // Format as YYYY-MM-DDTHH:MM for datetime-local input
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function fromLocalDatetimeValue(value: string): string | undefined {
-  if (!value) return undefined;
-  return new Date(value).toISOString();
-}
-
 interface FormState {
   title: string;
   description: string;
-  dueDate: string;
+  dueDatePart: string;
+  /** From `input type="time"`; empty = end of that local day. */
+  dueTimePart: string;
   type: TaskType;
   priority: TaskPriority | "none";
   courseId: string;
@@ -75,10 +64,12 @@ function buildInitialForm(
   isEdit: boolean,
 ): FormState {
   if (isEdit && task) {
+    const { date, time } = isoToLocalDueParts(task.dueDate);
     return {
       title: task.title,
       description: task.description ?? "",
-      dueDate: toLocalDatetimeValue(task.dueDate),
+      dueDatePart: date,
+      dueTimePart: time,
       type: task.type,
       priority: task.priority ?? "none",
       courseId: task.courseId ?? "none",
@@ -89,7 +80,8 @@ function buildInitialForm(
   return {
     title: "",
     description: "",
-    dueDate: "",
+    dueDatePart: "",
+    dueTimePart: "",
     type: "assignment",
     priority: "none",
     courseId: "none",
@@ -135,7 +127,8 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
       const {
         title,
         description,
-        dueDate,
+        dueDatePart,
+        dueTimePart,
         type,
         priority,
         courseId,
@@ -146,7 +139,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
       const payload = {
         title: title.trim(),
         description: description.trim() || undefined,
-        dueDate: fromLocalDatetimeValue(dueDate),
+        dueDate: dueDateAndTimeToIso(dueDatePart, dueTimePart),
         type,
         priority: priority === "none" ? undefined : priority,
         courseId: courseId === "none" ? undefined : courseId,
@@ -199,22 +192,36 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
         />
       </div>
 
-      {/* Due date/time */}
+      {/* Due date + optional typed time (native time input) */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="ct-due"
-          className="text-muted-foreground text-xs font-medium"
-        >
+        <span className="text-muted-foreground text-xs font-medium">
           Due date &amp; time
-        </label>
-        <Input
-          id="ct-due"
-          type="datetime-local"
-          value={form.dueDate}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, dueDate: e.target.value }))
-          }
-        />
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            id="ct-due-date"
+            type="date"
+            className="min-w-0 flex-1"
+            value={form.dueDatePart}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, dueDatePart: e.target.value }))
+            }
+          />
+          <Input
+            id="ct-due-time"
+            type="time"
+            className="w-29 shrink-0"
+            value={form.dueTimePart}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, dueTimePart: e.target.value }))
+            }
+            aria-label="Due time (optional)"
+          />
+        </div>
+        <p className="text-muted-foreground text-[11px] leading-snug">
+          Time is optional. Leave it empty for no specific time — we use 11:59
+          PM that day in your timezone.
+        </p>
       </div>
 
       {/* Type + Priority row */}
