@@ -16,7 +16,8 @@ import {
   unlinkTapper,
 } from "@/lib/actions/tappers";
 
-const OPTIMISTIC_PENDING = "optimistic-pending" as const;
+/** Feed cache marks adoption in-flight before the server responds. */
+export const SHARED_TASK_ADOPT_PENDING = "optimistic-pending" as const;
 
 function restoreQueries(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -123,7 +124,7 @@ export function useTapperActions() {
           if (!old) return old;
           return old.map((card) =>
             card.sharedTaskId === sharedTaskId
-              ? { ...card, addedTaskId: OPTIMISTIC_PENDING }
+              ? { ...card, addedTaskId: SHARED_TASK_ADOPT_PENDING }
               : card,
           );
         },

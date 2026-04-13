@@ -11,6 +11,7 @@ import { InviteCodeCard } from "@/components/tappers/invite-code-card";
 import { AcceptInviteForm } from "@/components/tappers/accept-invite-form";
 import { TappersList } from "@/components/tappers/tappers-list";
 import { GenerateInviteButton } from "@/components/tappers/generate-invite-button";
+import { SharedTasksFeed } from "@/components/tappers/shared-tasks-feed";
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
@@ -104,7 +105,8 @@ export default function TappersPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Tappers</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Invite a classmate to link accounts. Shared task feeds come next.
+          Invite a classmate to link accounts. Tasks they share with you appear
+          below.
         </p>
       </div>
 
@@ -133,6 +135,11 @@ export default function TappersPage() {
             void refetch();
           }}
         />
+      </section>
+
+      <section className="space-y-3">
+        <SectionLabel>Shared with you</SectionLabel>
+        <SharedTasksFeed />
       </section>
 
       <section className="space-y-3">
