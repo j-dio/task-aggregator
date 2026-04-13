@@ -6,7 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getMyInvite } from "@/lib/actions/tappers";
 import { useTappers } from "@/hooks/use-tappers";
+import { useSharedTasks } from "@/hooks/use-shared-tasks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InviteCodeCard } from "@/components/tappers/invite-code-card";
 import { AcceptInviteForm } from "@/components/tappers/accept-invite-form";
 import { TappersList } from "@/components/tappers/tappers-list";
@@ -85,6 +88,7 @@ function TappersInviteQueryToasts() {
 }
 
 export default function TappersPage() {
+  const { unseenCount } = useSharedTasks();
   const { tappers, isLoading: tappersLoading, refetch } = useTappers();
   const {
     data: invite,
@@ -100,62 +104,80 @@ export default function TappersPage() {
   const hasInvite = invite != null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10 p-4 md:p-6">
+    <div className="mx-auto max-w-2xl space-y-8 p-4 md:p-6">
       <TappersInviteQueryToasts />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Tappers</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Invite a classmate to link accounts. Tasks they share with you appear
-          below.
+          Invite a classmate to link accounts. Shared tasks live in the Shared
+          Tasks tab.
         </p>
       </div>
 
-      <section className="space-y-3">
-        <SectionLabel>Your invite code</SectionLabel>
-        {!inviteReady ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full rounded-[14px]" />
-            <Skeleton className="mx-auto size-[200px] rounded-md" />
-          </div>
-        ) : hasInvite ? (
-          <InviteCodeCard code={invite.code} expiresAt={invite.expiresAt} />
-        ) : (
-          <GenerateInviteButton
-            onGenerated={() => {
-              void refetchInvite();
-            }}
-          />
-        )}
-      </section>
+      <Tabs defaultValue="tappers" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="tappers">Tappers</TabsTrigger>
+          <TabsTrigger value="shared" className="gap-1.5">
+            Shared Tasks
+            {unseenCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-5 min-w-5 px-1 text-[10px] font-semibold tabular-nums"
+              >
+                {unseenCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      <section className="space-y-3">
-        <SectionLabel>Link with a classmate</SectionLabel>
-        <AcceptInviteForm
-          onSuccess={() => {
-            void refetch();
-          }}
-        />
-      </section>
+        <TabsContent value="tappers" className="mt-8 space-y-10">
+          <section className="space-y-3">
+            <SectionLabel>Your invite code</SectionLabel>
+            {!inviteReady ? (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full rounded-[14px]" />
+                <Skeleton className="mx-auto size-[200px] rounded-md" />
+              </div>
+            ) : hasInvite ? (
+              <InviteCodeCard code={invite.code} expiresAt={invite.expiresAt} />
+            ) : (
+              <GenerateInviteButton
+                onGenerated={() => {
+                  void refetchInvite();
+                }}
+              />
+            )}
+          </section>
 
-      <section className="space-y-3">
-        <SectionLabel>Shared with you</SectionLabel>
-        <SharedTasksFeed />
-      </section>
+          <section className="space-y-3">
+            <SectionLabel>Link with a classmate</SectionLabel>
+            <AcceptInviteForm
+              onSuccess={() => {
+                void refetch();
+              }}
+            />
+          </section>
 
-      <section className="space-y-3">
-        <SectionLabel>Your Tappers</SectionLabel>
-        <p className="text-muted-foreground text-xs">
-          Don&apos;t see someone who used your code? Refresh the page.
-        </p>
-        {tappersLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-16 w-full rounded-[14px]" />
-            <Skeleton className="h-16 w-full rounded-[14px]" />
-          </div>
-        ) : (
-          <TappersList tappers={tappers} />
-        )}
-      </section>
+          <section className="space-y-3">
+            <SectionLabel>Your Tappers</SectionLabel>
+            <p className="text-muted-foreground text-xs">
+              Don&apos;t see someone who used your code? Refresh the page.
+            </p>
+            {tappersLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full rounded-[14px]" />
+                <Skeleton className="h-16 w-full rounded-[14px]" />
+              </div>
+            ) : (
+              <TappersList tappers={tappers} />
+            )}
+          </section>
+        </TabsContent>
+
+        <TabsContent value="shared" className="mt-8">
+          <SharedTasksFeed />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

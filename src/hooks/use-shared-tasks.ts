@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { listSharedTasks } from "@/lib/actions/tappers";
 import type { SharedTaskCard } from "@/types/tappers";
 
+const EMPTY_FEED: SharedTaskCard[] = [];
+
 async function fetchSharedTasks(): Promise<SharedTaskCard[]> {
   const result = await listSharedTasks();
   if (!result.success) {
@@ -20,7 +22,7 @@ export function useSharedTasks() {
     staleTime: 30_000,
   });
 
-  const feed = query.data ?? [];
+  const feed = query.data ?? EMPTY_FEED;
   const unseenCount = useMemo(() => {
     const list = query.data ?? [];
     return list.filter((c) => c.seenAt === null).length;

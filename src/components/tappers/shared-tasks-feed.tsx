@@ -1,14 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSharedTasks } from "@/hooks/use-shared-tasks";
+import { useTapperActions } from "@/hooks/use-tapper-actions";
 import { mapSharedTaskCardToPreviewTask } from "@/lib/tappers/map-shared-task-to-preview-task";
 import { TaskDetailModal } from "@/components/task-detail-modal";
+import { SharedTaskCard } from "@/components/tappers/shared-task-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function SharedTasksFeed() {
   const { feed, isLoading, error } = useSharedTasks();
+  const { markSeen } = useTapperActions();
   const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const sortedFeed = useMemo(
+    () =>
+      [...feed].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [feed],
+  );
+
+  useEffect(() => {
+    if (isLoading) return;
+    const unseenIds = feed
+      .filter((c) => c.seenAt === null)
+      .map((c) => c.sharedTaskId);
+    if (unseenIds.length === 0) return;
+    markSeen.mutate(unseenIds);
+  }, [isLoading, feed, markSeen]);
 
   const preview =
     previewId === null
@@ -17,9 +38,10 @@ export function SharedTasksFeed() {
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-14 w-full rounded-[14px]" />
-        <Skeleton className="h-14 w-full rounded-[14px]" />
+      <div className="space-y-3">
+        <Skeleton className="h-[120px] w-full rounded-[14px]" />
+        <Skeleton className="h-[120px] w-full rounded-[14px]" />
+        <Skeleton className="h-[120px] w-full rounded-[14px]" />
       </div>
     );
   }
@@ -35,28 +57,20 @@ export function SharedTasksFeed() {
   if (feed.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        When a tapper shares a task with you, it will show up here.
+        No shared tasks yet. When a tapper shares a task, it&apos;ll appear here.
       </p>
     );
   }
 
   return (
     <>
-      <ul className="space-y-2">
-        {feed.map((card) => (
+      <ul className="space-y-3">
+        {sortedFeed.map((card) => (
           <li key={card.sharedTaskId}>
-            <button
-              type="button"
-              onClick={() => setPreviewId(card.sharedTaskId)}
-              className="skeu-card hover:bg-muted/40 w-full rounded-[14px] border px-3 py-3 text-left transition-colors"
-            >
-              <span className="line-clamp-2 text-sm font-medium">
-                {card.title}
-              </span>
-              <span className="text-muted-foreground mt-1 block text-xs">
-                From {card.ownerDisplayName}
-              </span>
-            </button>
+            <SharedTaskCard
+              card={card}
+              onTap={() => setPreviewId(card.sharedTaskId)}
+            />
           </li>
         ))}
       </ul>
