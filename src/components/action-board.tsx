@@ -31,6 +31,7 @@ interface ActionBoardProps {
   onShowLessDone?: () => void;
   onShowMoreInProgress?: () => void;
   onShowLessInProgress?: () => void;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
@@ -78,6 +79,7 @@ export function ActionBoard({
   onShowLessDone,
   onShowMoreInProgress,
   onShowLessInProgress,
+  onRequestEditCustomTask,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus, dismissAll } = useTaskActions();
@@ -184,6 +186,7 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
         <Column
           id="in_progress"
@@ -192,6 +195,7 @@ export function ActionBoard({
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
         <Column
           id="done"
@@ -202,6 +206,7 @@ export function ActionBoard({
           onShowLess={onShowLessDone}
           onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
           isDismissAllPending={dismissAll.isPending}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
       </div>
 

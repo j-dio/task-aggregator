@@ -92,6 +92,7 @@ interface ActionBoardColumnProps {
   onDismissAll?: () => void;
   /** Whether the dismiss-all mutation is currently pending. */
   isDismissAllPending?: boolean;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 export function ActionBoardColumn({
@@ -104,6 +105,7 @@ export function ActionBoardColumn({
   todoWindowDays,
   onDismissAll,
   isDismissAllPending,
+  onRequestEditCustomTask,
 }: ActionBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const Icon = columnIcons[id];
@@ -152,7 +154,11 @@ export function ActionBoardColumn({
         >
           <div className="min-h-25 space-y-2.5">
             {tasks.map((task) => (
-              <SortableTaskCard key={task.id} task={task} />
+              <SortableTaskCard
+                key={task.id}
+                task={task}
+                onRequestEditCustomTask={onRequestEditCustomTask}
+              />
             ))}
             {tasks.length === 0 && (
               <ColumnEmptyState id={id} todoWindowDays={todoWindowDays} />

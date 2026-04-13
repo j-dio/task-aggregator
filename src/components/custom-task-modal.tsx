@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import type { TaskWithCourse, TaskType, TaskPriority } from "@/types/task";
 import { useCourses } from "@/hooks/use-courses";
+import { useTappers } from "@/hooks/use-tappers";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import {
   Dialog,
@@ -63,6 +64,10 @@ interface FormState {
   type: TaskType;
   priority: TaskPriority | "none";
   courseId: string;
+  /** Create flow only: master toggle for sharing with tappers */
+  shareWithTappers: boolean;
+  /** Tapper user IDs selected when sharing is enabled */
+  selectedShareUserIds: string[];
 }
 
 function buildInitialForm(
@@ -77,6 +82,8 @@ function buildInitialForm(
       type: task.type,
       priority: task.priority ?? "none",
       courseId: task.courseId ?? "none",
+      shareWithTappers: false,
+      selectedShareUserIds: [],
     };
   }
   return {
@@ -86,6 +93,8 @@ function buildInitialForm(
     type: "assignment",
     priority: "none",
     courseId: "none",
+    shareWithTappers: false,
+    selectedShareUserIds: [],
   };
 }
 
@@ -100,8 +109,15 @@ interface TaskFormContentProps {
   onClose: () => void;
 }
 
+function tapperInitial(displayName: string): string {
+  const t = displayName.trim();
+  if (!t) return "?";
+  return t[0]!.toUpperCase();
+}
+
 function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
   const { data: courses } = useCourses();
+  const { tappers } = useTappers();
   const { createTask, editTask } = useTaskActions();
 
   // Lazy initialiser runs only on mount — no useEffect required.
@@ -116,7 +132,16 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
       e.preventDefault();
       if (!form.title.trim()) return;
 
-      const { title, description, dueDate, type, priority, courseId } = form;
+      const {
+        title,
+        description,
+        dueDate,
+        type,
+        priority,
+        courseId,
+        shareWithTappers,
+        selectedShareUserIds,
+      } = form;
 
       const payload = {
         title: title.trim(),
@@ -142,7 +167,11 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
           { onSuccess: onClose },
         );
       } else {
-        createTask.mutate(payload, { onSuccess: onClose });
+        const createPayload =
+          shareWithTappers && selectedShareUserIds.length > 0
+            ? { ...payload, shareWith: selectedShareUserIds }
+            : payload;
+        createTask.mutate(createPayload, { onSuccess: onClose });
       }
     },
     [form, isEdit, task, createTask, editTask, onClose],
@@ -263,6 +292,118 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {/* Share with tappers (create only) */}
+      {!isEdit && tappers.length > 0 && (
+        <div className="space-y-2 rounded-md border border-border/60 bg-muted/30 p-3">
+          <div className="flex items-start gap-2">
+            <input
+              id="ct-share-master"
+              type="checkbox"
+              className="border-input text-[#6e1d2a] focus-visible:ring-ring mt-0.5 h-4 w-4 shrink-0 rounded border shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              checked={form.shareWithTappers}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  shareWithTappers: e.target.checked,
+                  selectedShareUserIds: e.target.checked
+                    ? prev.selectedShareUserIds
+                    : [],
+                }))
+              }
+            />
+            <label
+              htmlFor="ct-share-master"
+              className="text-sm leading-snug font-medium"
+            >
+              Share with tappers
+            </label>
+          </div>
+
+          {form.shareWithTappers && (
+            <div className="space-y-2 pl-6">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground text-xs">
+                  Choose who can see this task
+                </span>
+                <button
+                  type="button"
+                  className="text-primary text-xs font-medium underline-offset-2 hover:underline"
+                  onClick={() => {
+                    const allIds = tappers.map((t) => t.userId);
+                    setForm((prev) => {
+                      const allSelected =
+                        allIds.length > 0 &&
+                        allIds.every((id) =>
+                          prev.selectedShareUserIds.includes(id),
+                        );
+                      return {
+                        ...prev,
+                        selectedShareUserIds: allSelected ? [] : [...allIds],
+                      };
+                    });
+                  }}
+                >
+                  {tappers.length > 0 &&
+                  tappers.every((t) =>
+                    form.selectedShareUserIds.includes(t.userId),
+                  )
+                    ? "Deselect all"
+                    : "Select all"}
+                </button>
+              </div>
+              <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
+                {tappers.map((tapper) => {
+                  const id = `ct-share-${tapper.userId}`;
+                  const checked = form.selectedShareUserIds.includes(
+                    tapper.userId,
+                  );
+                  return (
+                    <li key={tapper.userId}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={id}
+                          type="checkbox"
+                          className="border-input text-[#6e1d2a] focus-visible:ring-ring h-4 w-4 shrink-0 rounded border shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                          checked={checked}
+                          onChange={() => {
+                            setForm((prev) => {
+                              const has = prev.selectedShareUserIds.includes(
+                                tapper.userId,
+                              );
+                              const next = has
+                                ? prev.selectedShareUserIds.filter(
+                                    (x) => x !== tapper.userId,
+                                  )
+                                : [...prev.selectedShareUserIds, tapper.userId];
+                              return {
+                                ...prev,
+                                selectedShareUserIds: next,
+                              };
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor={id}
+                          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-sm"
+                        >
+                          <span
+                            className="bg-primary/15 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                            aria-hidden
+                          >
+                            {tapperInitial(tapper.displayName)}
+                          </span>
+                          <span className="truncate">{tapper.displayName}</span>
+                        </label>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

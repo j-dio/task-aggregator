@@ -21,6 +21,8 @@ interface TaskDetailModalProps {
   task: TaskWithCourse;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Opens the custom task editor modal; pass the same `task` the user is viewing. */
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 const urgencyLabel: Record<string, string> = {
@@ -36,6 +38,7 @@ export function TaskDetailModal({
   task,
   open,
   onOpenChange,
+  onRequestEditCustomTask,
 }: TaskDetailModalProps) {
   const urgency = getTaskUrgency(task.dueDate);
   const { setNotes } = useTaskActions();
@@ -194,6 +197,14 @@ export function TaskDetailModal({
           notesDraft={notesDraft}
           onNotesDraftChange={setNotesDraft}
           onSaveNotes={handleSaveNotes}
+          onEditCustomTask={
+            task.isCustom && onRequestEditCustomTask
+              ? () => {
+                  onRequestEditCustomTask(task);
+                  onOpenChange(false);
+                }
+              : undefined
+          }
         />
       </DialogContent>
     </Dialog>

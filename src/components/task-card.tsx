@@ -17,6 +17,7 @@ interface TaskCardProps {
   compact?: boolean;
   onModalOpenChange?: (open: boolean) => void;
   dragHandleListeners?: SyntheticListenerMap;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 const urgencyBorder: Record<string, string> = {
@@ -38,7 +39,14 @@ const urgencyGlow: Record<string, string> = {
 };
 
 
-export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHandleListeners }: TaskCardProps) {
+export function TaskCard({
+  task,
+  isDragging,
+  compact,
+  onModalOpenChange,
+  dragHandleListeners,
+  onRequestEditCustomTask,
+}: TaskCardProps) {
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -168,7 +176,12 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
         </button>
       </div>
 
-      <TaskDetailModal task={task} open={open} onOpenChange={handleOpenChange} />
+      <TaskDetailModal
+        task={task}
+        open={open}
+        onOpenChange={handleOpenChange}
+        onRequestEditCustomTask={onRequestEditCustomTask}
+      />
     </>
   );
 }

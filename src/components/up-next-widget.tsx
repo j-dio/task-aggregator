@@ -12,6 +12,7 @@ import { TaskDetailModal } from "@/components/task-detail-modal";
 
 interface UpNextWidgetProps {
   task: TaskWithCourse | null;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 const urgencyGradient: Record<string, string> = {
@@ -23,7 +24,10 @@ const urgencyGradient: Record<string, string> = {
   none: "from-muted/20 to-muted/5",
 };
 
-export function UpNextWidget({ task }: UpNextWidgetProps) {
+export function UpNextWidget({
+  task,
+  onRequestEditCustomTask,
+}: UpNextWidgetProps) {
   const { setStatus } = useTaskActions();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -149,6 +153,7 @@ export function UpNextWidget({ task }: UpNextWidgetProps) {
         task={task}
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onRequestEditCustomTask={onRequestEditCustomTask}
       />
     </>
   );

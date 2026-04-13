@@ -9,9 +9,13 @@ import { TaskCard } from "@/components/task-card";
 
 interface SortableTaskCardProps {
   task: TaskWithCourse;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
-export function SortableTaskCard({ task }: SortableTaskCardProps) {
+export function SortableTaskCard({
+  task,
+  onRequestEditCustomTask,
+}: SortableTaskCardProps) {
   // Track whether the task detail modal is open so we can suspend drag
   // listeners while it is — otherwise touch events inside the modal bleed
   // through to the dnd-kit sensor and trigger unwanted drags.
@@ -75,6 +79,7 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
         isDragging={isDragging}
         onModalOpenChange={setModalOpen}
         dragHandleListeners={handleListeners}
+        onRequestEditCustomTask={onRequestEditCustomTask}
       />
     </div>
   );

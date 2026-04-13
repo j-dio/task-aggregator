@@ -50,13 +50,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus } from "lucide-react";
 import { useTaskActions } from "@/hooks/use-task-actions";
+import type { TaskWithCourse } from "@/types/task";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const { mutate: sync, isPending: isSyncing } = useSync();
   const { archivePastDue } = useTaskActions();
   const [focusMode, setFocusMode] = useState(false);
-  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [customTaskModalOpen, setCustomTaskModalOpen] = useState(false);
+  const [customTaskToEdit, setCustomTaskToEdit] = useState<
+    TaskWithCourse | undefined
+  >(undefined);
+
+  const handleCustomTaskModalOpenChange = useCallback((open: boolean) => {
+    setCustomTaskModalOpen(open);
+    if (!open) setCustomTaskToEdit(undefined);
+  }, []);
+
+  const openNewCustomTask = useCallback(() => {
+    setCustomTaskToEdit(undefined);
+    setCustomTaskModalOpen(true);
+  }, []);
+
+  const requestEditCustomTask = useCallback((task: TaskWithCourse) => {
+    setCustomTaskToEdit(task);
+    setCustomTaskModalOpen(true);
+  }, []);
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
@@ -197,7 +216,7 @@ function DashboardContent() {
           <Button
             size="sm"
             className="skeu-btn h-8 gap-1.5 px-3 text-[13px] font-medium text-white"
-            onClick={() => setNewTaskOpen(true)}
+            onClick={openNewCustomTask}
           >
             <Plus className="size-3.5" />
             New task
@@ -233,7 +252,10 @@ function DashboardContent() {
         focusMode ? (
           <div className="space-y-4">
             {focusTasks.length > 0 ? (
-              <TaskList tasks={focusTasks} />
+              <TaskList
+                tasks={focusTasks}
+                onRequestEditCustomTask={requestEditCustomTask}
+              />
             ) : (
               <EmptyState
                 icon={ClipboardList}
@@ -244,7 +266,10 @@ function DashboardContent() {
           </div>
         ) : (
           <>
-            <UpNextWidget task={upNextTask} />
+            <UpNextWidget
+              task={upNextTask}
+              onRequestEditCustomTask={requestEditCustomTask}
+            />
             <ErrorBoundary>
               <ActionBoard
                 todoTasks={todo}
@@ -266,6 +291,7 @@ function DashboardContent() {
                     ? handleShowLessInProgress
                     : undefined
                 }
+                onRequestEditCustomTask={requestEditCustomTask}
               />
             </ErrorBoundary>
           </>
@@ -279,7 +305,11 @@ function DashboardContent() {
         />
       )}
 
-      <CustomTaskModal open={newTaskOpen} onOpenChange={setNewTaskOpen} />
+      <CustomTaskModal
+        open={customTaskModalOpen}
+        onOpenChange={handleCustomTaskModalOpenChange}
+        task={customTaskToEdit}
+      />
       <OnboardingTour />
     </div>
   );
