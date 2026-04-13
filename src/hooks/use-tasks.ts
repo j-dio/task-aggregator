@@ -10,6 +10,13 @@ import type {
 } from "@/types/task";
 import { mapRow } from "@/lib/task-mapper";
 
+/**
+ * Default forward window for `due_date` fetches. Must cover calendar navigation
+ * and long-range custom / adopted tasks (action board still buckets by its own
+ * shorter To Do window client-side).
+ */
+export const DEFAULT_TASK_LATER_WINDOW_DAYS = 365 * 6;
+
 export interface TaskFilters {
   source?: TaskSource;
   type?: TaskType;
@@ -17,7 +24,7 @@ export interface TaskFilters {
   status?: TaskDisplayStatus;
   /** How many days back to include overdue tasks (default 30) */
   overdueWindowDays?: number;
-  /** How many days ahead to include future tasks (default 60) */
+  /** How many days ahead to include future-due tasks (default ~6 years) */
   laterWindowDays?: number;
 }
 
@@ -31,7 +38,8 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   );
   const laterCeiling = new Date();
   laterCeiling.setDate(
-    laterCeiling.getDate() + (filters.laterWindowDays ?? 60),
+    laterCeiling.getDate() +
+      (filters.laterWindowDays ?? DEFAULT_TASK_LATER_WINDOW_DAYS),
   );
 
   // Try with task_overrides join first; fall back without if the table/FK is missing
