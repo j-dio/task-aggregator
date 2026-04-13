@@ -29,44 +29,40 @@ const SETUP_STEPS = [
   {
     step: 1,
     title: "Google sign-in",
-    helper: "Connected. You are ready to sync Google Classroom tasks.",
+    helper: "Done. Classroom syncs from the dashboard.",
   },
   {
     step: 2,
-    title: "Add your UVEC calendar link",
-    helper: "Paste the UVEC export URL so we can import assignments.",
+    title: "UVEC calendar link",
+    helper: "Paste the UVEC iCal export URL here.",
   },
   {
     step: 3,
-    title: "Finish and sync",
-    helper: "We save your link and take you to your dashboard to sync.",
+    title: "Finish",
+    helper: "We save it and send you to the dashboard.",
   },
 ] as const;
 
 const ICAL_STEPS = [
   {
     step: 1,
-    title: "Open UVEC",
-    description:
-      'Go to your UVEC dashboard and click on "Calendar" in the navigation menu.',
+    title: "Open Calendar",
+    description: "In UVEC, open Calendar from the main menu.",
   },
   {
     step: 2,
-    title: "Export Calendar",
-    description:
-      'Click the "Export calendar" button (or import/export icon) at the bottom of the calendar page.',
+    title: "Export",
+    description: "Use Export calendar at the bottom of that page.",
   },
   {
     step: 3,
-    title: "Configure Export",
-    description:
-      'Set "All events" for the export type and choose a wide date range to include all assignments.',
+    title: "Options",
+    description: "Pick All events and a wide date range.",
   },
   {
     step: 4,
-    title: "Copy the URL",
-    description:
-      'Click "Get calendar URL" and copy the entire URL. It should start with https:// and contain "export_execute.php".',
+    title: "Copy URL",
+    description: "Copy the full https:// link (includes export_execute.php).",
   },
 ] as const;
 
@@ -74,22 +70,22 @@ type StepState = "complete" | "active" | "pending";
 
 function getUrlHelperText(value: string, isValid: boolean) {
   if (!value) {
-    return "Tip: Copy the full export link from UVEC. It usually contains export_execute.php.";
+    return "Full export URL from UVEC — usually contains export_execute.php.";
   }
 
   if (isValid) {
-    return "This looks valid. Continue to connect UVEC.";
+    return "Looks valid.";
   }
 
   if (value.startsWith("http://")) {
-    return "Use the secure https:// URL from UVEC.";
+    return "Use https:// from UVEC.";
   }
 
   if (!value.includes("export") && !value.includes("ical")) {
-    return "This link may be incomplete. Try copying the full export URL again.";
+    return "Link may be incomplete — copy the full export URL.";
   }
 
-  return "Double-check the link format. The guide above shows where to copy it.";
+  return "Recheck against the steps above.";
 }
 
 function StepChip({
@@ -108,7 +104,7 @@ function StepChip({
   return (
     <li
       className={cn(
-        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 rounded-xl border p-3 transition-all motion-safe:duration-300 motion-reduce:animate-none",
+        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 rounded-xl border p-2.5 transition-all motion-safe:duration-300 motion-reduce:animate-none",
         state === "complete" && "border-success/35 bg-success/10",
         state === "active" &&
           "border-primary/45 bg-primary/8 shadow-primary/10 shadow-sm",
@@ -275,26 +271,23 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
   }
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-5">
-      <div className="text-center lg:text-left">
+    <div className="flex w-full flex-col gap-8 sm:gap-10">
+      <header className="mx-auto max-w-2xl text-center">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Welcome, {displayName}!
         </h1>
-        <p className="text-muted-foreground mt-2">
-          Let&apos;s finish setup so your assignments are easier to track in one
-          place.
+        <p className="text-muted-foreground mt-3 text-pretty text-sm leading-relaxed sm:text-base">
+          Add your UVEC export link so UVEC and Classroom live in one board.
         </p>
-      </div>
+      </header>
 
-      <div className="grid gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:items-start">
-        <Card className="border-primary/25 bg-card/95 backdrop-blur-sm">
+      <div className="grid gap-6 lg:grid-cols-[minmax(260px,290px)_minmax(0,1fr)] lg:items-stretch lg:gap-10">
+        <Card className="border-primary/25 bg-card/95 flex h-full min-h-0 flex-col backdrop-blur-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Setup progress</CardTitle>
-            <CardDescription>
-              Follow these steps. We&apos;ll guide you to the dashboard sync.
-            </CardDescription>
+            <CardDescription>Three steps, then the dashboard.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1 flex-col gap-4">
             <ol className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
               {stepStates.map(({ step, title, helper, state }, index) => (
                 <StepChip
@@ -308,29 +301,29 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
               ))}
             </ol>
 
-            <div className="border-border/70 bg-muted/35 mt-4 rounded-lg border p-3">
+            <div className="border-border/70 bg-muted/35 mt-auto rounded-lg border p-3">
               <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                What happens next
+                Next
               </p>
-              <ul className="mt-2 space-y-2 text-sm">
+              <ul className="mt-2 space-y-1.5 text-xs leading-snug sm:text-sm">
                 <li className="flex gap-2">
                   <Check className="text-success mt-0.5 size-4 shrink-0" />
-                  Google sign-in is done. Classroom data syncs on dashboard.
+                  Classroom syncs from the dashboard.
                 </li>
                 <li className="flex gap-2">
                   <Link2 className="text-primary mt-0.5 size-4 shrink-0" />
-                  Add your UVEC calendar URL to include Moodle assignments.
+                  UVEC URL adds UVEC tasks.
                 </li>
                 <li className="flex gap-2">
                   <Sparkles className="text-info mt-0.5 size-4 shrink-0" />
-                  You can still use the app now and finish UVEC later.
+                  Skip UVEC anytime — add it later in settings.
                 </li>
               </ul>
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 flex-col gap-4">
           <Card className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-reduce:animate-none">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
@@ -340,8 +333,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                 <div>
                   <CardTitle className="text-base">Google Classroom</CardTitle>
                   <CardDescription>
-                    Connected with Google Sign-In. First sync starts on your
-                    dashboard.
+                    Signed in — first sync runs from the dashboard.
                   </CardDescription>
                 </div>
               </div>
@@ -355,10 +347,9 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   <Calendar className="text-primary size-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">UVEC (Moodle)</CardTitle>
+                  <CardTitle className="text-base">UVEC</CardTitle>
                   <CardDescription>
-                    Add your calendar export link so UVEC assignments appear in
-                    your board.
+                    Paste the calendar export URL from UVEC.
                   </CardDescription>
                 </div>
               </div>
@@ -376,7 +367,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                     showGuide && "rotate-90",
                   )}
                 />
-                {showGuide ? "Hide" : "Show"} setup steps
+                {showGuide ? "Hide" : "Show"} steps
               </button>
 
               {showGuide && (
@@ -421,9 +412,9 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                               step
                             )}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-sm font-medium">{title}</p>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-muted-foreground text-xs leading-snug sm:text-sm">
                               {description}
                             </p>
                           </div>
@@ -437,21 +428,21 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
               {submitState === "saving" && (
                 <StatusBanner
                   tone="info"
-                  title="Connecting UVEC..."
-                  description="We are saving your link and preparing your first sync."
+                  title="Saving…"
+                  description="Storing your link and opening the dashboard."
                 />
               )}
               {submitState === "success" && (
                 <StatusBanner
                   tone="success"
-                  title="UVEC connected"
-                  description="Great! Taking you to your dashboard now."
+                  title="Connected"
+                  description="Heading to your dashboard."
                 />
               )}
               {error && (
                 <StatusBanner
                   tone="error"
-                  title="Could not connect this URL"
+                  title="Could not save this URL"
                   description={error}
                 />
               )}
@@ -520,26 +511,27 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   )}
                 </Button>
                 <p className="text-muted-foreground text-xs">
-                  Your link is validated and stored securely in your profile.
+                  Saved only to your profile.
                 </p>
               </form>
             </CardContent>
           </Card>
-
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            disabled={isPending}
-          >
-            Skip for now - I&apos;ll connect UVEC later
-          </button>
         </div>
       </div>
 
-      <p className="text-muted-foreground text-center text-xs lg:text-left">
-        We support offline-friendly viewing for recently loaded data, but setup
-        and syncing still require an internet connection.
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          disabled={isPending}
+        >
+          Skip UVEC for now
+        </button>
+      </div>
+
+      <p className="text-muted-foreground mx-auto max-w-2xl text-center text-xs text-pretty leading-relaxed sm:text-sm">
+        TapO(1) currently only works online.
       </p>
     </div>
   );
