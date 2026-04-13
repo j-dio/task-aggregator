@@ -44,6 +44,7 @@ export interface Task {
   fetchedAt: string;
   createdAt: string;
   updatedAt: string;
+  sharedFromUserId?: string;
 }
 
 export interface Course {
