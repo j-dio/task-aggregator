@@ -45,7 +45,7 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export function LoginCard({ error }: { error?: string }) {
+export function LoginCard({ error, next }: { error?: string; next?: string }) {
   const [isPending, setIsPending] = useState(false);
 
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? error) : null;
@@ -57,10 +57,14 @@ export function LoginCard({ error }: { error?: string }) {
     // directly in browser cookies via document.cookie. Using a server action
     // with redirect() can lose the code verifier cookie on production hosts.
     const supabase = createClient();
+    const callbackPath =
+      next && next.startsWith("/")
+        ? `/auth/callback?next=${encodeURIComponent(next)}`
+        : "/auth/callback";
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}${callbackPath}`,
         scopes: [
           "openid",
           "email",

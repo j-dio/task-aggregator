@@ -1,7 +1,9 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { getMyInvite } from "@/lib/actions/tappers";
 import { useTappers } from "@/hooks/use-tappers";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +31,58 @@ async function fetchMyInvite() {
   return result.invite ?? null;
 }
 
+function TappersInviteQueryToasts() {
+  const router = useRouter();
+  const handled = useRef(false);
+
+  useEffect(() => {
+    if (handled.current) {
+      return;
+    }
+
+    // Read the real URL here — not useSearchParams(). Without a Suspense
+    // boundary, useSearchParams can be empty on first paint and never match
+    // ?linked= / ?error= after a server redirect (dashboard page wraps
+    // useSearchParams in Suspense for the same reason).
+    const params = new URLSearchParams(window.location.search);
+    const linked = params.get("linked");
+    const error = params.get("error");
+
+    const stripQuery = () => {
+      queueMicrotask(() => router.replace("/dashboard/tappers"));
+    };
+
+    if (linked === "1") {
+      handled.current = true;
+      toast.success("Linked up! You're now connected.");
+      stripQuery();
+      return;
+    }
+
+    if (error === "self") {
+      handled.current = true;
+      toast.error("That's your own invite code.");
+      stripQuery();
+      return;
+    }
+
+    if (error === "invalid") {
+      handled.current = true;
+      toast.error("Invite code is invalid or expired.");
+      stripQuery();
+      return;
+    }
+
+    if (error === "unknown") {
+      handled.current = true;
+      toast.error("Something went wrong. Try again.");
+      stripQuery();
+    }
+  }, [router]);
+
+  return null;
+}
+
 export default function TappersPage() {
   const { tappers, isLoading: tappersLoading, refetch } = useTappers();
   const {
@@ -46,6 +100,7 @@ export default function TappersPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-10 p-4 md:p-6">
+      <TappersInviteQueryToasts />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Tappers</h1>
         <p className="text-muted-foreground mt-1 text-sm">
