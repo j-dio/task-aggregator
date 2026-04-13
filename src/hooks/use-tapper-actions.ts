@@ -53,9 +53,8 @@ export function useTapperActions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tappers"] });
     },
-    onError: (err, _code, context) => {
+    onError: (_err, _code, context) => {
       restoreQueries(queryClient, context?.previousTappers);
-      toast.error("Failed to accept invite", { description: err.message });
     },
   });
 

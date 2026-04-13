@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Users2,
 } from "lucide-react";
 import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { href: "/dashboard/history", label: "History", icon: History },
+  { href: "/dashboard/tappers", label: "Tappers", icon: Users2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
