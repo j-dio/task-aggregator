@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 const SESSION_KEY_TODO_DISPLAY = "todoDisplayLimit";
@@ -46,10 +46,12 @@ import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { CustomTaskModal } from "@/components/custom-task-modal";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { TappersAnnouncementModal } from "@/components/tappers/tappers-announcement-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus } from "lucide-react";
 import { useTaskActions } from "@/hooks/use-task-actions";
+import { createClient } from "@/lib/supabase/client";
 import type { TaskWithCourse } from "@/types/task";
 
 function DashboardContent() {
@@ -57,6 +59,25 @@ function DashboardContent() {
   const { mutate: sync, isPending: isSyncing } = useSync();
   const { archivePastDue } = useTaskActions();
   const [focusMode, setFocusMode] = useState(false);
+  const [seenAnnouncement, setSeenAnnouncement] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("seen_tappers_announcement")
+          .eq("id", session.user.id)
+          .single();
+        setSeenAnnouncement(data?.seen_tappers_announcement ?? true);
+      } catch {
+        // Swallow — modal defaults to hidden
+      }
+    })();
+  }, []);
   const [customTaskModalOpen, setCustomTaskModalOpen] = useState(false);
   const [customTaskToEdit, setCustomTaskToEdit] = useState<
     TaskWithCourse | undefined
@@ -311,6 +332,7 @@ function DashboardContent() {
         task={customTaskToEdit}
       />
       <OnboardingTour />
+      <TappersAnnouncementModal seenAnnouncement={seenAnnouncement} />
     </div>
   );
 }
