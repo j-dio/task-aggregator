@@ -126,6 +126,8 @@ self.addEventListener("push", (event: PushEvent) => {
 self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
 
+  // url is set in the push handler's data field — tapper-share notifications
+  // pass "/dashboard/tappers" while due-date reminders pass "/dashboard".
   const targetUrl: string =
     (event.notification.data as { url?: string })?.url ?? "/dashboard";
 
