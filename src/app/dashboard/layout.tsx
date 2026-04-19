@@ -18,7 +18,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, uvec_ical_url, google_connected")
+    .select("display_name, uvec_ical_url, google_connected, seen_tappers_announcement")
     .eq("id", user.id)
     .single();
 
@@ -34,6 +34,7 @@ export default async function DashboardLayout({
       displayName={displayName}
       email={user.email ?? ""}
       hasUvec={!!profile?.uvec_ical_url}
+      seenTappersAnnouncement={profile?.seen_tappers_announcement ?? true}
     >
       {children}
     </DashboardShell>

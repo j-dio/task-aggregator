@@ -13,8 +13,10 @@ import {
   Settings,
   Users2,
 } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
+import { markTappersAnnouncementSeen } from "@/lib/actions/tappers";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ interface SidebarNavProps {
   displayName: string;
   email: string;
   hasUvec: boolean;
+  seenTappersAnnouncement?: boolean;
 }
 
 const navItems = [
@@ -43,9 +46,17 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
+export function SidebarNav({
+  displayName,
+  email,
+  hasUvec,
+  seenTappersAnnouncement,
+}: SidebarNavProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [hasSeenTappers, setHasSeenTappers] = useState(
+    seenTappersAnnouncement ?? true,
+  );
 
   function handleSignOut() {
     startTransition(async () => {
@@ -75,10 +86,21 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
             href === "/dashboard"
               ? pathname === "/dashboard"
               : pathname.startsWith(href);
+          const isTappers = href === "/dashboard/tappers";
+          const showNewBadge = isTappers && !hasSeenTappers;
+
+          function handleTappersClick() {
+            if (isTappers && !hasSeenTappers) {
+              setHasSeenTappers(true);
+              void markTappersAnnouncementSeen();
+            }
+          }
+
           return (
             <Link
               key={href}
               href={href}
+              onClick={isTappers ? handleTappersClick : undefined}
               className={cn(
                 "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                 isActive
@@ -93,6 +115,14 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
                 )}
               />
               {label}
+              {showNewBadge && (
+                <Badge
+                  variant="default"
+                  className="ml-auto h-4 px-1.5 text-[9px] font-bold"
+                >
+                  NEW
+                </Badge>
+              )}
             </Link>
           );
         })}
