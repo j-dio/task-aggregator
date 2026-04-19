@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { ArrowRight, ArrowLeft, Users2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,13 @@ import { markTappersAnnouncementSeen } from "@/lib/actions/tappers";
 
 const ANNOUNCE_KEY = "feature-announce-tappers-v2";
 const ANNOUNCE_STORE_EVENT = "tappers-announce-store";
+
+// The onboarding tour must be finished before the announcement can show.
+const TOUR_COMPLETED_KEY = "onboarding-tour-completed";
+const TOUR_STORE_EVENT = "onboarding-tour-store";
+
+// How long to wait after the tour closes before showing the announcement.
+const POST_TOUR_DELAY_MS = 600;
 
 function subscribeToAnnounceStore(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -39,13 +46,37 @@ export function TappersAnnouncementModal({ seenAnnouncement }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
 
+  // True once the onboarding tour has been completed or dismissed.
+  // Initialised synchronously so returning users (tour already done) see no delay.
+  const [tourDone, setTourDone] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(TOUR_COMPLETED_KEY) !== null;
+  });
+
+  // Listen for the tour finishing during this page session and apply the
+  // short delay so the tappers modal doesn't open while the tour is mid-fade.
+  useEffect(() => {
+    if (tourDone) return;
+    function handleTourDone() {
+      if (localStorage.getItem(TOUR_COMPLETED_KEY) !== null) {
+        setTimeout(() => setTourDone(true), POST_TOUR_DELAY_MS);
+      }
+    }
+    window.addEventListener(TOUR_STORE_EVENT, handleTourDone);
+    window.addEventListener("storage", handleTourDone);
+    return () => {
+      window.removeEventListener(TOUR_STORE_EVENT, handleTourDone);
+      window.removeEventListener("storage", handleTourDone);
+    };
+  }, [tourDone]);
+
   const localShouldShow = useSyncExternalStore(
     subscribeToAnnounceStore,
     getAnnounceShouldShowSnapshot,
     getServerAnnounceShouldShowSnapshot,
   );
 
-  if (seenAnnouncement || !localShouldShow) return null;
+  if (!tourDone || seenAnnouncement || !localShouldShow) return null;
 
   function dismiss() {
     localStorage.setItem(ANNOUNCE_KEY, "true");
