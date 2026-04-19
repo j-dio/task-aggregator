@@ -36,7 +36,7 @@ export function TappersList({ tappers }: { tappers: TapperSummary[] }) {
           className="skeu-card flex flex-wrap items-center gap-3 rounded-[14px] p-4"
         >
           <Avatar size="sm">
-            <AvatarFallback className="text-xs font-semibold">
+            <AvatarFallback className="text-xs font-semibold" aria-hidden="true">
               {initials(tapper.displayName)}
             </AvatarFallback>
           </Avatar>

@@ -8,6 +8,8 @@ import { getMyInvite } from "@/lib/actions/tappers";
 import { useTappers } from "@/hooks/use-tappers";
 import { useSharedTasks } from "@/hooks/use-shared-tasks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InviteCodeCard } from "@/components/tappers/invite-code-card";
@@ -89,7 +91,7 @@ function TappersInviteQueryToasts() {
 
 export default function TappersPage() {
   const { unseenCount } = useSharedTasks();
-  const { tappers, isLoading: tappersLoading, refetch } = useTappers();
+  const { tappers, isLoading: tappersLoading, refetch, error: tappersError } = useTappers();
   const {
     data: invite,
     isLoading: inviteLoading,
@@ -167,6 +169,25 @@ export default function TappersPage() {
               <div className="space-y-3">
                 <Skeleton className="h-16 w-full rounded-[14px]" />
                 <Skeleton className="h-16 w-full rounded-[14px]" />
+                <Skeleton className="h-16 w-full rounded-[14px]" />
+              </div>
+            ) : tappersError ? (
+              <div className="rounded-[14px] border border-destructive/30 bg-destructive/5 p-4">
+                <p className="text-destructive text-sm font-medium">
+                  {tappersError instanceof Error
+                    ? tappersError.message
+                    : "Couldn't load your tappers."}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 gap-1.5"
+                  onClick={() => void refetch()}
+                >
+                  <RefreshCw className="size-3.5" />
+                  Retry
+                </Button>
               </div>
             ) : (
               <TappersList tappers={tappers} />

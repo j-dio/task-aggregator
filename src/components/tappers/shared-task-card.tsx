@@ -44,7 +44,7 @@ export function SharedTaskCard({ card, onTap }: SharedTaskCardProps) {
       )}
       <div className="flex gap-2.5">
         <Avatar size="sm" className="shrink-0">
-          <AvatarFallback className="text-[10px] font-medium">
+          <AvatarFallback className="text-[10px] font-medium" aria-hidden="true">
             {displayNameInitials(card.ownerDisplayName)}
           </AvatarFallback>
         </Avatar>
