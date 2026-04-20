@@ -181,7 +181,7 @@ export function SidebarNav({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="flex items-center gap-0.5 px-1">
+          <div className="flex min-w-0 items-center gap-0.5 px-1">
             <ThemeToggle showLabel />
             <ExportButton showLabel />
             <SyncButton />
