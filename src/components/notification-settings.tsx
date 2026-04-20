@@ -11,6 +11,8 @@ import { Bell, BellOff, Loader2, AlertTriangle, Info } from "lucide-react";
 export function NotificationSettings() {
   const {
     isSupported,
+    isBraveBrowser,
+    isFirefoxBrowser,
     permission,
     isSubscribed,
     isLoading,
@@ -21,6 +23,36 @@ export function NotificationSettings() {
 
   return (
     <div className="space-y-3">
+      {isBraveBrowser && (
+        <div className="bg-muted/50 flex items-start gap-2 rounded-md border border-amber-500/30 p-3 text-sm">
+          <Info className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500" />
+          <div>
+            <p className="font-medium">Brave and Web Push</p>
+            <p className="text-muted-foreground">
+              Brave can allow notification permission for this site but still block
+              the push service used for reminders. For reliable Web Push, use{" "}
+              <span className="text-foreground font-medium">Google Chrome</span> or{" "}
+              <span className="text-foreground font-medium">Microsoft Edge</span>.
+              You can also try lowering Shields for this site (not guaranteed).
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isFirefoxBrowser && (
+        <div className="bg-muted/50 flex items-start gap-2 rounded-md p-3 text-sm">
+          <Info className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+          <div>
+            <p className="font-medium">Firefox and installing this app</p>
+            <p className="text-muted-foreground">
+              Firefox has limited support for installing web apps (PWA) compared to
+              Chrome, Edge, or Safari. You can still use this site in the browser;
+              shortcuts and install prompts may vary by platform.
+            </p>
+          </div>
+        </div>
+      )}
+
       {!isSupported ? (
         <div className="bg-muted/50 flex items-start gap-2 rounded-md p-3 text-sm">
           <Info className="text-muted-foreground mt-0.5 size-4 shrink-0" />

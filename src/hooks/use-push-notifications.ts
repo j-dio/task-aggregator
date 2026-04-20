@@ -5,9 +5,72 @@ import { subscribePush, unsubscribePush } from "@/lib/actions/notifications";
 
 type PushPermissionState = "default" | "granted" | "denied" | "unsupported";
 
+/** Firefox (desktop or iOS); PWA install support is limited compared to Chromium / Safari. */
+function readIsFirefox(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /\b(Firefox|FxiOS)\//.test(ua);
+}
+
+type NavigatorWithBrave = Navigator & {
+  brave?: { isBrave?: () => Promise<boolean> };
+  userAgentData?: { brands?: readonly { brand: string }[] };
+};
+
+/** Chromium client hints: Brave identifies itself here even when the UA looks like Chrome. */
+function readBraveFromUserAgentBrands(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const brands = (navigator as NavigatorWithBrave).userAgentData?.brands;
+  return Boolean(brands?.some((b) => /brave/i.test(b.brand)));
+}
+
+async function readIsBraveBrowser(): Promise<boolean> {
+  if (typeof navigator === "undefined") return false;
+  if (readBraveFromUserAgentBrands()) return true;
+  const isBrave = (navigator as NavigatorWithBrave).brave?.isBrave;
+  if (typeof isBrave !== "function") return false;
+  try {
+    return await isBrave();
+  } catch {
+    return false;
+  }
+}
+
+const CHROME_EDGE_FRAGMENT = "Try Google Chrome or Microsoft Edge";
+
+const BRAVE_WEB_PUSH_HINT =
+  ` Brave often blocks Web Push (the push service step) even when notification permission is allowed — ${CHROME_EDGE_FRAGMENT} for reliable reminders.`;
+
+/** When we cannot detect Brave but the browser reports a push infrastructure failure. */
+const PUSH_SERVICE_GENERIC_HINT = ` ${CHROME_EDGE_FRAGMENT}, confirm the site uses HTTPS with an active service worker, or lower privacy/Shields if your browser blocks third-party push endpoints.`;
+
+function isLikelyPushServiceRegistrationFailure(message: string): boolean {
+  return /registration failed|push service not available|push service error/i.test(
+    message,
+  );
+}
+
+function appendPushSubscribeHint(
+  message: string,
+  options: { runningOnBrave: boolean },
+): string {
+  if (message.includes(CHROME_EDGE_FRAGMENT)) return message;
+  if (options.runningOnBrave) {
+    return `${message}${BRAVE_WEB_PUSH_HINT}`;
+  }
+  if (isLikelyPushServiceRegistrationFailure(message)) {
+    return `${message}${PUSH_SERVICE_GENERIC_HINT}`;
+  }
+  return message;
+}
+
 interface UsePushNotificationsReturn {
   /** Whether push notifications are supported in this browser. */
   isSupported: boolean;
+  /** Brave often blocks Web Push silently; suggest another browser for reliability. */
+  isBraveBrowser: boolean;
+  /** Firefox has limited / inconsistent PWA “install to home screen” support across platforms. */
+  isFirefoxBrowser: boolean;
   /** Current browser notification permission state. */
   permission: PushPermissionState;
   /** Whether the user is currently subscribed to push. */
@@ -63,6 +126,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isBraveBrowser, setIsBraveBrowser] = useState(
+    () => typeof window !== "undefined" && readBraveFromUserAgentBrands(),
+  );
+  const [isFirefoxBrowser] = useState(() => readIsFirefox());
 
   const isSupported =
     typeof window !== "undefined" &&
@@ -96,6 +163,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       });
   }, [isSupported]);
 
+  useEffect(() => {
+    if (readBraveFromUserAgentBrands()) {
+      setIsBraveBrowser(true);
+    }
+    let cancelled = false;
+    void readIsBraveBrowser().then((brave) => {
+      if (!cancelled) setIsBraveBrowser((prev) => prev || brave);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const subscribe = useCallback(async () => {
     if (!isSupported) {
       setError("Push notifications are not supported in this browser");
@@ -105,7 +185,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     setIsLoading(true);
     setError(null);
 
+    /** Fresh each attempt — avoids a race where UI still has `isBraveBrowser === false`. */
+    let runningOnBrave = false;
+
     try {
+      runningOnBrave =
+        readBraveFromUserAgentBrands() || (await readIsBraveBrowser());
+      if (runningOnBrave) {
+        setIsBraveBrowser(true);
+      }
+
       // Step 1: Check SW is registered before asking for permission
       const regs = await navigator.serviceWorker.getRegistrations();
       if (regs.length === 0) {
@@ -154,7 +243,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         !subscriptionJson.keys?.auth
       ) {
         await subscription.unsubscribe();
-        setError("Failed to create push subscription — missing keys");
+        setError(
+          appendPushSubscribeHint(
+            "Failed to create push subscription — missing keys",
+            { runningOnBrave },
+          ),
+        );
         return;
       }
 
@@ -169,7 +263,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
       if (!serverResult.success) {
         await subscription.unsubscribe();
-        setError(serverResult.error ?? "Failed to save subscription");
+        setError(
+          appendPushSubscribeHint(
+            serverResult.error ?? "Failed to save subscription",
+            { runningOnBrave },
+          ),
+        );
         return;
       }
 
@@ -177,7 +276,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to subscribe";
-      setError(message);
+      setError(appendPushSubscribeHint(message, { runningOnBrave }));
     } finally {
       setIsLoading(false);
     }
@@ -221,6 +320,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
   return {
     isSupported,
+    isBraveBrowser,
+    isFirefoxBrowser,
     permission,
     isSubscribed,
     isLoading,
