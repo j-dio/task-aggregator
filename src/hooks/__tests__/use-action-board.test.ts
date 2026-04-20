@@ -128,6 +128,7 @@ describe("computeActionBoardBuckets", () => {
     );
     const result = computeActionBoardBuckets(tasks, NOW, 7);
     expect(result.todo).toHaveLength(7);
+    expect(result.todoTotal).toBe(8);
     expect(result.todoHasMore).toBe(true);
   });
 
@@ -152,6 +153,7 @@ describe("computeActionBoardBuckets", () => {
     );
 
     expect(result.todo).toHaveLength(7);
+    expect(result.todoTotal).toBe(7);
     expect(result.todoHasMore).toBe(false);
   });
 
@@ -231,6 +233,10 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todo).toHaveLength(1);
     expect(result.inProgress).toHaveLength(1);
     expect(result.done).toHaveLength(1);
+    expect(result.todoTotal).toBe(1);
+    expect(result.inProgressTotal).toBe(1);
+    expect(result.doneTotal).toBe(1);
+    expect(result.doneTaskIds).toEqual(["done"]);
     expect(result.todoHasMore).toBe(false);
   });
 
@@ -276,6 +282,10 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todo).toHaveLength(0);
     expect(result.inProgress).toHaveLength(0);
     expect(result.done).toHaveLength(0);
+    expect(result.todoTotal).toBe(0);
+    expect(result.inProgressTotal).toBe(0);
+    expect(result.doneTotal).toBe(0);
+    expect(result.doneTaskIds).toEqual([]);
   });
 
   // ---- Done bucket (hardcoded 7-day window + count-based display limit) ----
@@ -314,6 +324,11 @@ describe("computeActionBoardBuckets", () => {
     );
     const result = computeActionBoardBuckets(tasks, NOW, 7);
     expect(result.done).toHaveLength(7);
+    expect(result.doneTotal).toBe(8);
+    expect(result.doneTaskIds).toHaveLength(8);
+    expect(result.doneTaskIds).toEqual(
+      tasks.map((t) => t.id),
+    );
     expect(result.doneHasMore).toBe(true);
   });
 
@@ -336,6 +351,7 @@ describe("computeActionBoardBuckets", () => {
     );
     const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 7, 5);
     expect(result.inProgress).toHaveLength(5);
+    expect(result.inProgressTotal).toBe(7);
     expect(result.inProgressHasMore).toBe(true);
   });
 

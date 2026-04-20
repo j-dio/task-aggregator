@@ -144,6 +144,21 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Native date/time icons are dark by default — invisible on dark inputs */
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator,
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    opacity: 0.92;
+    cursor: pointer;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="time"],
+  .dark input[type="datetime-local"] {
+    color-scheme: dark;
+  }
 }
 
 @layer utilities {

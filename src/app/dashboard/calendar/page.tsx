@@ -123,15 +123,10 @@ function CalendarContent() {
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
-  const type = searchParams.get("type");
   const course = searchParams.get("course");
-  const status = searchParams.get("status");
   if (source && source !== "all")
     filters.source = source as TaskFilters["source"];
-  if (type && type !== "all") filters.type = type as TaskFilters["type"];
   if (course && course !== "all") filters.courseId = course;
-  if (status && status !== "all")
-    filters.status = status as TaskFilters["status"];
 
   const { data: tasks, isLoading } = useTasks(filters);
   const { data: courses } = useCourses();

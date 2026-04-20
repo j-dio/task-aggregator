@@ -43,6 +43,10 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.has(pathname);
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.has(pathname);
 
+  // /tappers/join/* stays protected (not in PUBLIC_ROUTES). Unauthenticated
+  // visitors hit the branch below: redirect to /login?next=<full pathname>.
+  // Authenticated users fall through with the refreshed session response.
+
   // Redirect authenticated users away from login
   if (user && isAuthOnlyRoute) {
     return NextResponse.redirect(new URL("/dashboard", request.url));

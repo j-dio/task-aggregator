@@ -14,6 +14,7 @@ interface DashboardShellProps {
   displayName: string;
   email: string;
   hasUvec: boolean;
+  seenTappersAnnouncement?: boolean;
 }
 
 export function DashboardShell({
@@ -21,6 +22,7 @@ export function DashboardShell({
   displayName,
   email,
   hasUvec,
+  seenTappersAnnouncement,
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,7 +30,12 @@ export function DashboardShell({
     <div className="skeu-bg flex h-dvh overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="skeu-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:overflow-hidden">
-        <SidebarNav displayName={displayName} email={email} hasUvec={hasUvec} />
+        <SidebarNav
+          displayName={displayName}
+          email={email}
+          hasUvec={hasUvec}
+          seenTappersAnnouncement={seenTappersAnnouncement}
+        />
       </aside>
 
       {/* Mobile sidebar */}
@@ -39,6 +46,7 @@ export function DashboardShell({
             displayName={displayName}
             email={email}
             hasUvec={hasUvec}
+            seenTappersAnnouncement={seenTappersAnnouncement}
           />
         </SheetContent>
       </Sheet>

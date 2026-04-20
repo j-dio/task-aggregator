@@ -25,12 +25,18 @@ interface ActionBoardProps {
   todoTasks: TaskWithCourse[];
   inProgressTasks: TaskWithCourse[];
   doneTasks: TaskWithCourse[];
+  todoTotal: number;
+  inProgressTotal: number;
+  doneTotal: number;
+  /** All Done-column task IDs (full bucket), for dismiss-all. */
+  doneTaskIds: string[];
   onShowMoreTodo?: () => void;
   onShowLessTodo?: () => void;
   onShowMoreDone?: () => void;
   onShowLessDone?: () => void;
   onShowMoreInProgress?: () => void;
   onShowLessInProgress?: () => void;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
@@ -72,12 +78,17 @@ export function ActionBoard({
   todoTasks,
   inProgressTasks,
   doneTasks,
+  todoTotal,
+  inProgressTotal,
+  doneTotal,
+  doneTaskIds,
   onShowMoreTodo,
   onShowLessTodo,
   onShowMoreDone,
   onShowLessDone,
   onShowMoreInProgress,
   onShowLessInProgress,
+  onRequestEditCustomTask,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus, dismissAll } = useTaskActions();
@@ -181,27 +192,33 @@ export function ActionBoard({
           id="todo"
           title="To Do"
           tasks={todoTasks}
+          taskTotal={todoTotal}
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
         <Column
           id="in_progress"
           title="In Progress"
           tasks={inProgressTasks}
+          taskTotal={inProgressTotal}
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
         <Column
           id="done"
           title="Done"
           tasks={doneTasks}
+          taskTotal={doneTotal}
           accentClass="text-success"
           onShowMore={onShowMoreDone}
           onShowLess={onShowLessDone}
-          onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
+          onDismissAll={() => dismissAll.mutate(doneTaskIds)}
           isDismissAllPending={dismissAll.isPending}
+          onRequestEditCustomTask={onRequestEditCustomTask}
         />
       </div>
 

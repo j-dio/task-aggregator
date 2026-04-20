@@ -68,36 +68,41 @@ export function SyncButton({ className, showLabel }: SyncButtonProps) {
           : "Sync tasks";
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size={showLabel ? "sm" : "icon-sm"}
-        onClick={() => sync()}
-        disabled={disabled}
-        className={cn(showLabel && "gap-1.5", className)}
-        aria-label={title}
-        title={title}
-      >
-        <RefreshCw
-          className={cn(
-            "size-4 shrink-0",
-            isPending && "animate-spin",
-            (error || reconnect) && "text-destructive",
-            hasWarnings && !reconnect && "text-warning",
+    <div className="flex min-w-0 items-start gap-2">
+      <div className="flex shrink-0 flex-col items-center gap-0.5">
+        <Button
+          variant="ghost"
+          size={showLabel ? "sm" : "icon-sm"}
+          onClick={() => sync()}
+          disabled={disabled}
+          className={cn(showLabel && "gap-1.5", className)}
+          aria-label={title}
+          title={title}
+        >
+          <RefreshCw
+            className={cn(
+              "size-4 shrink-0",
+              isPending && "animate-spin",
+              (error || reconnect) && "text-destructive",
+              hasWarnings && !reconnect && "text-warning",
+            )}
+          />
+          {showLabel && (
+            <span>{isPending ? "Syncing…" : "Sync"}</span>
           )}
-        />
-        {showLabel && (
-          <span>{isPending ? "Syncing…" : "Sync"}</span>
+        </Button>
+        {!error && cooldown && getLastSyncAt() > 0 && (
+          <span
+            className="text-muted-foreground max-w-full truncate text-center text-[10px] leading-none tabular-nums"
+            aria-live="polite"
+          >
+            {formatCooldown(remaining)}
+          </span>
         )}
-      </Button>
+      </div>
       {error && (
-        <span className="text-destructive max-w-[20rem] text-xs line-clamp-2">
+        <span className="text-destructive min-w-0 max-w-[20rem] flex-1 text-xs line-clamp-2">
           {error.message}
-        </span>
-      )}
-      {!error && cooldown && getLastSyncAt() > 0 && (
-        <span className="text-muted-foreground text-xs">
-          {formatCooldown(remaining)}
         </span>
       )}
     </div>

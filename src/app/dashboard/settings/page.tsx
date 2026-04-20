@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
+import { TapperNotificationToggle } from "@/components/tappers/tapper-notification-toggle";
 import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
 
 const SUPPORT_EMAIL = "tapo1support@gmail.com";
@@ -473,6 +474,7 @@ export default function SettingsPage() {
             </div>
 
             <NotificationSettings />
+            <TapperNotificationToggle />
           </section>
 
           {/* ── App ────────────────────────────────────────────────── */}

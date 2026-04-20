@@ -48,6 +48,10 @@ export function computeActionBoardBuckets(
     todo: [],
     inProgress: [],
     done: [],
+    todoTotal: 0,
+    inProgressTotal: 0,
+    doneTotal: 0,
+    doneTaskIds: [],
     todoHasMore: false,
     inProgressHasMore: false,
     doneHasMore: false,
@@ -78,6 +82,7 @@ export function computeActionBoardBuckets(
     if (!b.dueDate) return -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
+  buckets.todoTotal = buckets.todo.length;
   if (buckets.todo.length > todoDisplayLimit) {
     buckets.todoHasMore = true;
     buckets.todo = buckets.todo.slice(0, todoDisplayLimit);
@@ -89,6 +94,7 @@ export function computeActionBoardBuckets(
     if (!b.dueDate) return -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
+  buckets.inProgressTotal = buckets.inProgress.length;
   if (buckets.inProgress.length > inProgressDisplayLimit) {
     buckets.inProgressHasMore = true;
     buckets.inProgress = buckets.inProgress.slice(0, inProgressDisplayLimit);
@@ -98,6 +104,8 @@ export function computeActionBoardBuckets(
   buckets.done.sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
+  buckets.doneTotal = buckets.done.length;
+  buckets.doneTaskIds = buckets.done.map((t) => t.id);
   if (buckets.done.length > doneDisplayLimit) {
     buckets.doneHasMore = true;
     buckets.done = buckets.done.slice(0, doneDisplayLimit);

@@ -5,13 +5,15 @@ import type { TaskWithCourse } from "@/types/task";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import { Button } from "@/components/ui/button";
 import type { TaskPriority } from "@/types/task";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 interface TaskActionsProps {
   task: TaskWithCourse;
   notesDraft: string;
   onNotesDraftChange: (value: string) => void;
   onSaveNotes: () => void;
+  /** Opens the custom task editor (detail modal should close first). */
+  onEditCustomTask?: () => void;
 }
 
 export function TaskActions({
@@ -19,6 +21,7 @@ export function TaskActions({
   notesDraft,
   onNotesDraftChange,
   onSaveNotes,
+  onEditCustomTask,
 }: TaskActionsProps) {
   const { setStatus, setPriority, setNotes, deleteTask } = useTaskActions();
 
@@ -104,6 +107,18 @@ export function TaskActions({
               <ExternalLink className="size-4" />
               Open in {task.source === "gclassroom" ? "Classroom" : "UVEC"}
             </a>
+          </Button>
+        )}
+
+        {task.isCustom && onEditCustomTask && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onEditCustomTask}
+          >
+            <Pencil className="size-4" />
+            Edit
           </Button>
         )}
 

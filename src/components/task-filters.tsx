@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Course } from "@/types/task";
 import {
@@ -20,15 +20,12 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
   const searchParams = useSearchParams();
 
   const currentSource = searchParams.get("source") ?? "all";
-  const currentType = searchParams.get("type") ?? "all";
   const currentCourse = searchParams.get("course") ?? "all";
-  const currentStatus = searchParams.get("status") ?? "all";
-  const currentSort = searchParams.get("sort") ?? "due-date";
 
   const setFilter = useCallback(
-    (key: string, value: string) => {
+    (key: "source" | "course", value: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value === "all" || (key === "sort" && value === "due-date")) {
+      if (value === "all") {
         params.delete(key);
       } else {
         params.set(key, value);
@@ -38,6 +35,21 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
     },
     [router, searchParams],
   );
+
+  // Drop legacy query keys so bookmarks and shared links match supported filters
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+    for (const key of ["type", "status", "sort"] as const) {
+      if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : "?", { scroll: false });
+  }, [router, searchParams]);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -53,20 +65,6 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           <SelectItem value="uvec">UVEC</SelectItem>
           <SelectItem value="gclassroom">Classroom</SelectItem>
           <SelectItem value="custom">Custom</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select value={currentType} onValueChange={(v) => setFilter("type", v)}>
-        <SelectTrigger className="h-8 w-32.5 text-xs">
-          <SelectValue placeholder="Type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All types</SelectItem>
-          <SelectItem value="assignment">Assignment</SelectItem>
-          <SelectItem value="quiz">Quiz</SelectItem>
-          <SelectItem value="exam">Exam</SelectItem>
-          <SelectItem value="event">Event</SelectItem>
-          <SelectItem value="announcement">Announcement</SelectItem>
         </SelectContent>
       </Select>
 
@@ -88,35 +86,6 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           </SelectContent>
         </Select>
       )}
-
-      <Select
-        value={currentStatus}
-        onValueChange={(v) => setFilter("status", v)}
-      >
-        <SelectTrigger className="h-8 w-32.5 text-xs">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All status</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="overdue">Overdue</SelectItem>
-          <SelectItem value="done">Done</SelectItem>
-          <SelectItem value="dismissed">Dismissed</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select value={currentSort} onValueChange={(v) => setFilter("sort", v)}>
-        <SelectTrigger className="h-8 w-32.5 text-xs">
-          <SelectValue placeholder="Sort" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="due-date">Due date</SelectItem>
-          <SelectItem value="priority">Priority</SelectItem>
-          <SelectItem value="type">Type</SelectItem>
-          <SelectItem value="title">Title</SelectItem>
-        </SelectContent>
-      </Select>
     </div>
   );
 }

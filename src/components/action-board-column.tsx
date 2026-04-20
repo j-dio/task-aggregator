@@ -79,6 +79,8 @@ interface ActionBoardColumnProps {
   id: ColumnId;
   title: string;
   tasks: TaskWithCourse[];
+  /** Full bucket count (may exceed `tasks.length` when the list is windowed). */
+  taskTotal: number;
   accentClass: string;
   /** Show More callback — provided when more tasks exist beyond the current window. */
   onShowMore?: () => void;
@@ -92,18 +94,21 @@ interface ActionBoardColumnProps {
   onDismissAll?: () => void;
   /** Whether the dismiss-all mutation is currently pending. */
   isDismissAllPending?: boolean;
+  onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
 export function ActionBoardColumn({
   id,
   title,
   tasks,
+  taskTotal,
   onShowMore,
   onShowLess,
   showMoreLabel,
   todoWindowDays,
   onDismissAll,
   isDismissAllPending,
+  onRequestEditCustomTask,
 }: ActionBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const Icon = columnIcons[id];
@@ -127,7 +132,7 @@ export function ActionBoardColumn({
             variant="ghost"
             size="sm"
             className="ml-auto h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-            disabled={tasks.length === 0 || isDismissAllPending}
+            disabled={taskTotal === 0 || isDismissAllPending}
             onClick={onDismissAll}
           >
             Dismiss all
@@ -140,7 +145,7 @@ export function ActionBoardColumn({
             !(id === "done" && onDismissAll) && "ml-auto",
           )}
         >
-          {tasks.length}
+          {taskTotal}
         </span>
       </div>
 
@@ -152,7 +157,11 @@ export function ActionBoardColumn({
         >
           <div className="min-h-25 space-y-2.5">
             {tasks.map((task) => (
-              <SortableTaskCard key={task.id} task={task} />
+              <SortableTaskCard
+                key={task.id}
+                task={task}
+                onRequestEditCustomTask={onRequestEditCustomTask}
+              />
             ))}
             {tasks.length === 0 && (
               <ColumnEmptyState id={id} todoWindowDays={todoWindowDays} />

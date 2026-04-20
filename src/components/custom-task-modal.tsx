@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import type { TaskWithCourse, TaskType, TaskPriority } from "@/types/task";
 import { useCourses } from "@/hooks/use-courses";
+import { useTappers } from "@/hooks/use-tappers";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { dueDateAndTimeToIso, isoToLocalDueParts } from "@/lib/due-date-input";
 
 const TASK_TYPES: { value: TaskType; label: string }[] = [
   { value: "assignment", label: "Assignment" },
@@ -42,27 +44,19 @@ export interface CustomTaskModalProps {
   task?: TaskWithCourse;
 }
 
-function toLocalDatetimeValue(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  // Format as YYYY-MM-DDTHH:MM for datetime-local input
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function fromLocalDatetimeValue(value: string): string | undefined {
-  if (!value) return undefined;
-  return new Date(value).toISOString();
-}
-
 interface FormState {
   title: string;
   description: string;
-  dueDate: string;
+  dueDatePart: string;
+  /** From `input type="time"`; empty = end of that local day. */
+  dueTimePart: string;
   type: TaskType;
   priority: TaskPriority | "none";
   courseId: string;
+  /** Create flow only: master toggle for sharing with tappers */
+  shareWithTappers: boolean;
+  /** Tapper user IDs selected when sharing is enabled */
+  selectedShareUserIds: string[];
 }
 
 function buildInitialForm(
@@ -70,22 +64,29 @@ function buildInitialForm(
   isEdit: boolean,
 ): FormState {
   if (isEdit && task) {
+    const { date, time } = isoToLocalDueParts(task.dueDate);
     return {
       title: task.title,
       description: task.description ?? "",
-      dueDate: toLocalDatetimeValue(task.dueDate),
+      dueDatePart: date,
+      dueTimePart: time,
       type: task.type,
       priority: task.priority ?? "none",
       courseId: task.courseId ?? "none",
+      shareWithTappers: false,
+      selectedShareUserIds: [],
     };
   }
   return {
     title: "",
     description: "",
-    dueDate: "",
+    dueDatePart: "",
+    dueTimePart: "",
     type: "assignment",
     priority: "none",
     courseId: "none",
+    shareWithTappers: false,
+    selectedShareUserIds: [],
   };
 }
 
@@ -100,8 +101,15 @@ interface TaskFormContentProps {
   onClose: () => void;
 }
 
+function tapperInitial(displayName: string): string {
+  const t = displayName.trim();
+  if (!t) return "?";
+  return t[0]!.toUpperCase();
+}
+
 function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
   const { data: courses } = useCourses();
+  const { tappers } = useTappers();
   const { createTask, editTask } = useTaskActions();
 
   // Lazy initialiser runs only on mount — no useEffect required.
@@ -116,12 +124,22 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
       e.preventDefault();
       if (!form.title.trim()) return;
 
-      const { title, description, dueDate, type, priority, courseId } = form;
+      const {
+        title,
+        description,
+        dueDatePart,
+        dueTimePart,
+        type,
+        priority,
+        courseId,
+        shareWithTappers,
+        selectedShareUserIds,
+      } = form;
 
       const payload = {
         title: title.trim(),
         description: description.trim() || undefined,
-        dueDate: fromLocalDatetimeValue(dueDate),
+        dueDate: dueDateAndTimeToIso(dueDatePart, dueTimePart),
         type,
         priority: priority === "none" ? undefined : priority,
         courseId: courseId === "none" ? undefined : courseId,
@@ -142,7 +160,11 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
           { onSuccess: onClose },
         );
       } else {
-        createTask.mutate(payload, { onSuccess: onClose });
+        const createPayload =
+          shareWithTappers && selectedShareUserIds.length > 0
+            ? { ...payload, shareWith: selectedShareUserIds }
+            : payload;
+        createTask.mutate(createPayload, { onSuccess: onClose });
       }
     },
     [form, isEdit, task, createTask, editTask, onClose],
@@ -170,22 +192,36 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
         />
       </div>
 
-      {/* Due date/time */}
+      {/* Due date + optional typed time (native time input) */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="ct-due"
-          className="text-muted-foreground text-xs font-medium"
-        >
+        <span className="text-muted-foreground text-xs font-medium">
           Due date &amp; time
-        </label>
-        <Input
-          id="ct-due"
-          type="datetime-local"
-          value={form.dueDate}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, dueDate: e.target.value }))
-          }
-        />
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            id="ct-due-date"
+            type="date"
+            className="min-w-0 flex-1"
+            value={form.dueDatePart}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, dueDatePart: e.target.value }))
+            }
+          />
+          <Input
+            id="ct-due-time"
+            type="time"
+            className="w-29 shrink-0"
+            value={form.dueTimePart}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, dueTimePart: e.target.value }))
+            }
+            aria-label="Due time (optional)"
+          />
+        </div>
+        <p className="text-muted-foreground text-[11px] leading-snug">
+          Time is optional. Leave it empty for no specific time — we use 11:59
+          PM that day in your timezone.
+        </p>
       </div>
 
       {/* Type + Priority row */}
@@ -263,6 +299,118 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {/* Share with tappers (create only) */}
+      {!isEdit && tappers.length > 0 && (
+        <div className="space-y-2 rounded-md border border-border/60 bg-muted/30 p-3">
+          <div className="flex items-start gap-2">
+            <input
+              id="ct-share-master"
+              type="checkbox"
+              className="border-input text-[#6e1d2a] focus-visible:ring-ring mt-0.5 h-4 w-4 shrink-0 rounded border shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              checked={form.shareWithTappers}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  shareWithTappers: e.target.checked,
+                  selectedShareUserIds: e.target.checked
+                    ? prev.selectedShareUserIds
+                    : [],
+                }))
+              }
+            />
+            <label
+              htmlFor="ct-share-master"
+              className="text-sm leading-snug font-medium"
+            >
+              Share with tappers
+            </label>
+          </div>
+
+          {form.shareWithTappers && (
+            <div className="space-y-2 pl-6">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground text-xs">
+                  Choose who can see this task
+                </span>
+                <button
+                  type="button"
+                  className="text-primary text-xs font-medium underline-offset-2 hover:underline"
+                  onClick={() => {
+                    const allIds = tappers.map((t) => t.userId);
+                    setForm((prev) => {
+                      const allSelected =
+                        allIds.length > 0 &&
+                        allIds.every((id) =>
+                          prev.selectedShareUserIds.includes(id),
+                        );
+                      return {
+                        ...prev,
+                        selectedShareUserIds: allSelected ? [] : [...allIds],
+                      };
+                    });
+                  }}
+                >
+                  {tappers.length > 0 &&
+                  tappers.every((t) =>
+                    form.selectedShareUserIds.includes(t.userId),
+                  )
+                    ? "Deselect all"
+                    : "Select all"}
+                </button>
+              </div>
+              <ul className="max-h-40 space-y-2 overflow-y-auto pr-1">
+                {tappers.map((tapper) => {
+                  const id = `ct-share-${tapper.userId}`;
+                  const checked = form.selectedShareUserIds.includes(
+                    tapper.userId,
+                  );
+                  return (
+                    <li key={tapper.userId}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={id}
+                          type="checkbox"
+                          className="border-input text-[#6e1d2a] focus-visible:ring-ring h-4 w-4 shrink-0 rounded border shadow-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                          checked={checked}
+                          onChange={() => {
+                            setForm((prev) => {
+                              const has = prev.selectedShareUserIds.includes(
+                                tapper.userId,
+                              );
+                              const next = has
+                                ? prev.selectedShareUserIds.filter(
+                                    (x) => x !== tapper.userId,
+                                  )
+                                : [...prev.selectedShareUserIds, tapper.userId];
+                              return {
+                                ...prev,
+                                selectedShareUserIds: next,
+                              };
+                            });
+                          }}
+                        />
+                        <label
+                          htmlFor={id}
+                          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-sm"
+                        >
+                          <span
+                            className="bg-primary/15 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                            aria-hidden
+                          >
+                            {tapperInitial(tapper.displayName)}
+                          </span>
+                          <span className="truncate">{tapper.displayName}</span>
+                        </label>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

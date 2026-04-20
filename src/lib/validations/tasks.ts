@@ -19,6 +19,7 @@ export const createCustomTaskSchema = z.object({
   type: z.enum(TASK_TYPES).optional().default("assignment"),
   courseId: z.uuid().optional(),
   priority: z.enum(TASK_PRIORITIES).optional(),
+  shareWith: z.array(z.uuid()).max(20).optional(),
 });
 
 export type CreateCustomTaskInput = z.infer<typeof createCustomTaskSchema>;

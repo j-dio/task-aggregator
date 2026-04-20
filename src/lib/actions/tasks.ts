@@ -34,7 +34,8 @@ export async function createCustomTask(input: unknown): Promise<ActionResult> {
     return { success: false, error: "Not authenticated" };
   }
 
-  const { title, description, dueDate, type, courseId, priority } = parsed.data;
+  const { title, description, dueDate, type, courseId, priority, shareWith } =
+    parsed.data;
 
   const externalId = crypto.randomUUID();
 
@@ -75,6 +76,19 @@ export async function createCustomTask(input: unknown): Promise<ActionResult> {
     if (overrideError) {
       return { success: false, error: overrideError.message };
     }
+  }
+
+  if (shareWith && shareWith.length > 0 && task) {
+    const { error: shareError } = await supabase.rpc("share_task", {
+      p_task_id: task.id,
+      p_recipient_ids: shareWith,
+    });
+    if (shareError) {
+      // share_task verifies links; production: send to error monitoring
+    }
+    notifySharedTask(task.id, shareWith).catch(() => {
+      // Swallow — push delivery is best-effort
+    });
   }
 
   return { success: true, id: task.id };
@@ -193,4 +207,19 @@ export async function deleteCustomTask(id: string): Promise<ActionResult> {
   }
 
   return { success: true };
+}
+
+async function notifySharedTask(taskId: string, recipientIds: string[]) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) return;
+
+  await fetch(`${supabaseUrl}/functions/v1/notify-shared-task`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ taskId, recipientIds }),
+  });
 }

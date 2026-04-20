@@ -9,7 +9,7 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -25,7 +25,7 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <LoginCard error={params.error} />
+      <LoginCard error={params.error} next={params.next} />
     </div>
   );
 }
