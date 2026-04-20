@@ -188,6 +188,10 @@ function DashboardContent() {
     todo,
     inProgress,
     done,
+    todoTotal,
+    inProgressTotal,
+    doneTotal,
+    doneTaskIds,
     todoHasMore,
     doneHasMore,
     inProgressHasMore,
@@ -296,6 +300,10 @@ function DashboardContent() {
                 todoTasks={todo}
                 inProgressTasks={inProgress}
                 doneTasks={done}
+                todoTotal={todoTotal}
+                inProgressTotal={inProgressTotal}
+                doneTotal={doneTotal}
+                doneTaskIds={doneTaskIds}
                 onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
                 onShowLessTodo={
                   todoDisplayLimit > 7 ? handleShowLessTodo : undefined

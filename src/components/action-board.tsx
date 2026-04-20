@@ -25,6 +25,11 @@ interface ActionBoardProps {
   todoTasks: TaskWithCourse[];
   inProgressTasks: TaskWithCourse[];
   doneTasks: TaskWithCourse[];
+  todoTotal: number;
+  inProgressTotal: number;
+  doneTotal: number;
+  /** All Done-column task IDs (full bucket), for dismiss-all. */
+  doneTaskIds: string[];
   onShowMoreTodo?: () => void;
   onShowLessTodo?: () => void;
   onShowMoreDone?: () => void;
@@ -73,6 +78,10 @@ export function ActionBoard({
   todoTasks,
   inProgressTasks,
   doneTasks,
+  todoTotal,
+  inProgressTotal,
+  doneTotal,
+  doneTaskIds,
   onShowMoreTodo,
   onShowLessTodo,
   onShowMoreDone,
@@ -183,6 +192,7 @@ export function ActionBoard({
           id="todo"
           title="To Do"
           tasks={todoTasks}
+          taskTotal={todoTotal}
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
@@ -192,6 +202,7 @@ export function ActionBoard({
           id="in_progress"
           title="In Progress"
           tasks={inProgressTasks}
+          taskTotal={inProgressTotal}
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
@@ -201,10 +212,11 @@ export function ActionBoard({
           id="done"
           title="Done"
           tasks={doneTasks}
+          taskTotal={doneTotal}
           accentClass="text-success"
           onShowMore={onShowMoreDone}
           onShowLess={onShowLessDone}
-          onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
+          onDismissAll={() => dismissAll.mutate(doneTaskIds)}
           isDismissAllPending={dismissAll.isPending}
           onRequestEditCustomTask={onRequestEditCustomTask}
         />

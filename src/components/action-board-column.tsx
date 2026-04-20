@@ -79,6 +79,8 @@ interface ActionBoardColumnProps {
   id: ColumnId;
   title: string;
   tasks: TaskWithCourse[];
+  /** Full bucket count (may exceed `tasks.length` when the list is windowed). */
+  taskTotal: number;
   accentClass: string;
   /** Show More callback — provided when more tasks exist beyond the current window. */
   onShowMore?: () => void;
@@ -99,6 +101,7 @@ export function ActionBoardColumn({
   id,
   title,
   tasks,
+  taskTotal,
   onShowMore,
   onShowLess,
   showMoreLabel,
@@ -129,7 +132,7 @@ export function ActionBoardColumn({
             variant="ghost"
             size="sm"
             className="ml-auto h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-            disabled={tasks.length === 0 || isDismissAllPending}
+            disabled={taskTotal === 0 || isDismissAllPending}
             onClick={onDismissAll}
           >
             Dismiss all
@@ -142,7 +145,7 @@ export function ActionBoardColumn({
             !(id === "done" && onDismissAll) && "ml-auto",
           )}
         >
-          {tasks.length}
+          {taskTotal}
         </span>
       </div>
 
