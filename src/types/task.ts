@@ -19,6 +19,14 @@ export interface ActionBoardBuckets {
   todo: TaskWithCourse[];
   inProgress: TaskWithCourse[];
   done: TaskWithCourse[];
+  /** Full count in the To Do bucket before display slicing (time window + sort). */
+  todoTotal: number;
+  /** Full count in the In Progress bucket before display slicing. */
+  inProgressTotal: number;
+  /** Full count in the Done bucket before display slicing (7-day window + sort). */
+  doneTotal: number;
+  /** Task IDs in the Done bucket before display slicing — use for "Dismiss all". */
+  doneTaskIds: string[];
   /** True when pending tasks exist beyond the current To Do time window. */
   todoHasMore: boolean;
   /** True when in-progress tasks exist beyond the current limit. */
