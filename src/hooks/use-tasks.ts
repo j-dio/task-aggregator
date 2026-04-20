@@ -2,12 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type {
-  TaskWithCourse,
-  TaskSource,
-  TaskType,
-  TaskDisplayStatus,
-} from "@/types/task";
+import type { TaskWithCourse, TaskSource } from "@/types/task";
 import { mapRow } from "@/lib/task-mapper";
 
 /**
@@ -19,9 +14,7 @@ export const DEFAULT_TASK_LATER_WINDOW_DAYS = 365 * 6;
 
 export interface TaskFilters {
   source?: TaskSource;
-  type?: TaskType;
   courseId?: string;
-  status?: TaskDisplayStatus;
   /** How many days back to include overdue tasks (default 30) */
   overdueWindowDays?: number;
   /** How many days ahead to include future-due tasks (default ~6 years) */
@@ -57,18 +50,8 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   if (filters.source) {
     query = query.eq("source", filters.source);
   }
-  if (filters.type) {
-    query = query.eq("type", filters.type);
-  }
   if (filters.courseId) {
     query = query.eq("course_id", filters.courseId);
-  }
-  if (
-    filters.status &&
-    filters.status !== "overdue" &&
-    filters.status !== "in_progress"
-  ) {
-    query = query.eq("status", filters.status);
   }
 
   let result = await query;
@@ -87,16 +70,8 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
 
     if (filters.source)
       fallbackQuery = fallbackQuery.eq("source", filters.source);
-    if (filters.type) fallbackQuery = fallbackQuery.eq("type", filters.type);
     if (filters.courseId)
       fallbackQuery = fallbackQuery.eq("course_id", filters.courseId);
-    if (
-      filters.status &&
-      filters.status !== "overdue" &&
-      filters.status !== "in_progress"
-    ) {
-      fallbackQuery = fallbackQuery.eq("status", filters.status);
-    }
 
     result = await fallbackQuery;
   }
@@ -104,13 +79,7 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   if (result.error) throw result.error;
 
   const rows = (result.data ?? []) as unknown as Record<string, unknown>[];
-  const mapped = rows.map(mapRow);
-
-  if (filters.status) {
-    return mapped.filter((task) => task.displayStatus === filters.status);
-  }
-
-  return mapped;
+  return rows.map(mapRow);
 }
 
 export function useTasks(filters: TaskFilters = {}) {

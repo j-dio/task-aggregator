@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback, useEffect } from "react";
+import { Suspense, useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
 const SESSION_KEY_TODO_DISPLAY = "todoDisplayLimit";
@@ -100,15 +100,10 @@ function DashboardContent() {
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
-  const type = searchParams.get("type");
   const course = searchParams.get("course");
-  const status = searchParams.get("status");
   if (source && source !== "all")
     filters.source = source as TaskFilters["source"];
-  if (type && type !== "all") filters.type = type as TaskFilters["type"];
   if (course && course !== "all") filters.courseId = course;
-  if (status && status !== "all")
-    filters.status = status as TaskFilters["status"];
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(filters);
   const { data: courses } = useCourses();
@@ -203,6 +198,47 @@ function DashboardContent() {
   );
   const upNextTask = useUpNext(tasks ?? []);
   const focusTasks = useFocusMode(tasks ?? []);
+
+  const hasActiveFilters = Boolean(filters.source || filters.courseId);
+
+  const filteredEmptyCopy = useMemo(() => {
+    if (!filters.source && !filters.courseId) return null;
+
+    const sourceLabels: Record<NonNullable<TaskFilters["source"]>, string> = {
+      uvec: "UVEC",
+      gclassroom: "Google Classroom",
+      custom: "Custom",
+    };
+
+    const courseName =
+      filters.courseId && courses
+        ? courses.find((c) => c.id === filters.courseId)?.name
+        : undefined;
+
+    if (courseName && filters.source) {
+      return {
+        title: "No matching tasks",
+        description: `Nothing from “${courseName}” (${sourceLabels[filters.source]}) on your board right now. Try another filter or clear them to see everything.`,
+      };
+    }
+    if (courseName) {
+      return {
+        title: "No tasks for this course",
+        description: `“${courseName}” has no tasks here right now. Pick another course or clear the filter to see all tasks.`,
+      };
+    }
+    if (filters.source) {
+      return {
+        title: "No tasks from this source",
+        description: `No ${sourceLabels[filters.source]} tasks match this view. Try another source or clear filters.`,
+      };
+    }
+    return {
+      title: "No matching tasks",
+      description:
+        "Nothing matches these filters. Clear them to see your full task list.",
+    };
+  }, [courses, filters.courseId, filters.source]);
 
   return (
     <div className="flex flex-col gap-6" {...bind}>
@@ -325,6 +361,13 @@ function DashboardContent() {
             </ErrorBoundary>
           </>
         )
+      ) : hasActiveFilters && filteredEmptyCopy ? (
+        <EmptyState
+          icon={ClipboardList}
+          title={filteredEmptyCopy.title}
+          description={filteredEmptyCopy.description}
+          action={{ label: "Clear filters", href: "/dashboard" }}
+        />
       ) : (
         <EmptyState
           icon={ClipboardList}
