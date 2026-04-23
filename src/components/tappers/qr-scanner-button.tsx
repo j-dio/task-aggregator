@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, X } from "lucide-react";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,15 +11,13 @@ import {
 } from "@/components/ui/dialog";
 
 function extractInviteCode(raw: string): string | null {
-  // Full URL: https://example.com/tappers/join/CODE123
   try {
     const url = new URL(raw);
     const match = url.pathname.match(/\/tappers\/join\/([A-Z0-9]{6,20})$/i);
     if (match?.[1]) return match[1].toUpperCase();
   } catch {
-    // not a URL — fall through
+    // not a URL
   }
-  // Bare code: 12 alphanumeric chars
   const bare = raw.trim().toUpperCase();
   if (/^[A-Z0-9]{6,20}$/.test(bare)) return bare;
   return null;
@@ -30,42 +28,46 @@ interface Props {
 }
 
 export function QrScannerButton({ onCode }: Props) {
+  const [isTouch, setIsTouch] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Callback ref: fires when the <video> element mounts inside the Dialog portal
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const scannerRef = useRef<import("qr-scanner").default | null>(null);
+
+  useEffect(() => {
+    setIsTouch("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   const stopScanner = useCallback(() => {
     scannerRef.current?.destroy();
     scannerRef.current = null;
   }, []);
 
+  // Start/stop scanner whenever the dialog is open AND the video element is mounted
   useEffect(() => {
-    if (!open) {
-      stopScanner();
-      setError(null);
+    if (!open || !videoEl) {
+      if (!open) stopScanner();
       return;
     }
-
-    const video = videoRef.current;
-    if (!video) return;
 
     let cancelled = false;
 
     (async () => {
       try {
         const QrScanner = (await import("qr-scanner")).default;
+        if (cancelled) return;
 
         const hasCamera = await QrScanner.hasCamera();
         if (!hasCamera) {
           if (!cancelled) setError("No camera found on this device.");
           return;
         }
-
         if (cancelled) return;
 
         const scanner = new QrScanner(
-          video,
+          videoEl,
           (result) => {
             const code = extractInviteCode(result.data);
             if (!code) return;
@@ -88,9 +90,11 @@ export function QrScannerButton({ onCode }: Props) {
           const msg =
             err instanceof Error ? err.message : "Camera access failed.";
           setError(
-            msg.toLowerCase().includes("permission")
+            msg.toLowerCase().includes("permission") ||
+              msg.toLowerCase().includes("denied") ||
+              msg.toLowerCase().includes("notallowed")
               ? "Camera permission denied. Allow camera access and try again."
-              : msg,
+              : "Could not start camera. Try again.",
           );
         }
       }
@@ -98,9 +102,23 @@ export function QrScannerButton({ onCode }: Props) {
 
     return () => {
       cancelled = true;
-      stopScanner();
     };
-  }, [open, onCode, stopScanner]);
+  }, [open, videoEl, onCode, stopScanner]);
+
+  // Clear state when dialog closes
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next) {
+        stopScanner();
+        setError(null);
+        setVideoEl(null);
+      }
+      setOpen(next);
+    },
+    [stopScanner],
+  );
+
+  if (!isTouch) return null;
 
   return (
     <>
@@ -114,37 +132,37 @@ export function QrScannerButton({ onCode }: Props) {
         <Camera className="size-4" />
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm p-0 overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-3">
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-w-sm overflow-hidden p-0">
+          <DialogHeader className="px-5 pb-3 pt-5">
             <DialogTitle className="text-base">Scan invite QR code</DialogTitle>
           </DialogHeader>
 
           {error ? (
-            <div className="px-5 pb-5 space-y-3">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="space-y-3 px-5 pb-5">
+              <p className="text-destructive text-sm">{error}</p>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   setError(null);
-                  setOpen(false);
-                  setTimeout(() => setOpen(true), 50);
+                  setVideoEl(null);
                 }}
               >
                 Retry
               </Button>
             </div>
           ) : (
-            <div className="relative w-full aspect-square bg-black">
+            <div className="relative aspect-square w-full bg-black">
+              {/* callback ref — fires when the element enters the DOM */}
               <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
+                ref={setVideoEl}
+                className="h-full w-full object-cover"
                 muted
                 playsInline
               />
-              <p className="absolute bottom-3 left-0 right-0 text-center text-white/70 text-xs px-4">
+              <p className="absolute bottom-3 left-0 right-0 px-4 text-center text-xs text-white/70">
                 Point at a classmate&apos;s invite QR code
               </p>
             </div>
