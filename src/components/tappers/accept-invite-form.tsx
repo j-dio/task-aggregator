@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { acceptInviteSchema } from "@/lib/validations/tappers";
 import { useTapperActions } from "@/hooks/use-tapper-actions";
 import { Loader2 } from "lucide-react";
+import { QrScannerButton } from "@/components/tappers/qr-scanner-button";
 
 export function AcceptInviteForm({ onSuccess }: { onSuccess: () => void }) {
   const [code, setCode] = useState("");
@@ -46,18 +47,27 @@ export function AcceptInviteForm({ onSuccess }: { onSuccess: () => void }) {
       </h2>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1.5">
-          <Input
-            placeholder="Enter invite code"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value);
-              setLocalError(null);
-              acceptInvite.reset();
-            }}
-            autoComplete="off"
-            spellCheck={false}
-            aria-invalid={!!displayError}
-          />
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter invite code"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setLocalError(null);
+                acceptInvite.reset();
+              }}
+              autoComplete="off"
+              spellCheck={false}
+              aria-invalid={!!displayError}
+            />
+            <QrScannerButton
+              onCode={(scanned) => {
+                setCode(scanned);
+                setLocalError(null);
+                acceptInvite.reset();
+              }}
+            />
+          </div>
           {displayError ? (
             <p className="text-destructive text-sm">{displayError}</p>
           ) : null}
