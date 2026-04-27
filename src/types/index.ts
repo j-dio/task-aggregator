@@ -10,3 +10,4 @@ export type {
   TaskWithCourse,
   Profile,
 } from "./task";
+export type { TapperSummary, SharedTaskCard, TapperInvite } from "./tappers";

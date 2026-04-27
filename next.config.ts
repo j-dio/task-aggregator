@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
         destination: "/dashboard/calendar",
         permanent: true,
       },
+      {
+        source: "/dashboard/week",
+        destination: "/dashboard/calendar",
+        permanent: true,
+      },
     ];
   },
 };
