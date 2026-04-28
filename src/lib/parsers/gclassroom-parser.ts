@@ -60,17 +60,17 @@ function formatDueDate(
 }
 
 /**
- * RETURNED means the teacher sent work back and the app has no dedicated "needs revision" status,
- * so we use in_progress instead of incorrectly marking it done. Unknown states return undefined
- * so sync can preserve the existing DB status.
+ * The app has no dedicated "needs revision" status. Classroom RETURNED often means
+ * graded/returned, so mapping it to done avoids resurrecting old no-deadline work.
+ * Unknown states return undefined so sync can preserve the existing DB status.
  */
 function mapSubmissionStateToStatus(state: string): TaskStatus | undefined {
   switch (state) {
     case "TURNED_IN":
+    case "RETURNED":
       return "done";
     case "DRAFT":
     case "RECLAIMED_BY_STUDENT":
-    case "RETURNED":
       return "in_progress";
     default:
       return undefined;

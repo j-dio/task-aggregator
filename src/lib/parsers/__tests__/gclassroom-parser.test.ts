@@ -90,7 +90,7 @@ describe("parseGClassroomResponse", () => {
     expect(result.map((task) => [task.externalId, task.status])).toEqual([
       ["draft", "in_progress"],
       ["reclaimed", "in_progress"],
-      ["returned", "in_progress"],
+      ["returned", "done"],
       ["turned-in", "done"],
       ["new", undefined],
     ]);
