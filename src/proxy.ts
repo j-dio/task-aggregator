@@ -15,12 +15,7 @@ export async function proxy(request: NextRequest) {
   // Refresh the session and get auth state in a single call
   const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
-
-  // Server actions expect an RSC payload; redirecting these requests can
-  // return HTML and crash the client with syntax errors.
-  if (request.headers.has("next-action")) {
-    return response;
-  }
+  const isServerAction = request.headers.has("next-action");
 
   // Skip auth checks for APIs, auth callbacks, and framework/static assets.
   // This prevents redirects from breaking CSS/JS/image loading.
@@ -50,6 +45,17 @@ export async function proxy(request: NextRequest) {
   // Redirect authenticated users away from login
   if (user && isAuthOnlyRoute) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Server Actions post back to the route that rendered them and expect a React
+  // Server Components response. For protected routes, fail closed with 401
+  // instead of returning login HTML to the action transport.
+  if (isServerAction && !user && !isPublicRoute) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (isServerAction) {
+    return response;
   }
 
   // Redirect unauthenticated users to login (for protected routes)
