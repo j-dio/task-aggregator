@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
+  MeasuringStrategy,
   pointerWithin,
   rectIntersection,
   KeyboardSensor,
@@ -19,7 +20,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { TaskWithCourse, ActionBoardColumn } from "@/types/task";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import { ActionBoardColumn as Column } from "@/components/action-board-column";
-import { TaskCard } from "@/components/task-card";
+import { TaskCardOverlay } from "@/components/task-card-overlay";
 
 interface ActionBoardProps {
   todoTasks: TaskWithCourse[];
@@ -92,6 +93,11 @@ export function ActionBoard({
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus, dismissAll } = useTaskActions();
+
+  const handleRequestEditCustomTask = useCallback(
+    (task: TaskWithCourse) => onRequestEditCustomTask?.(task),
+    [onRequestEditCustomTask],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -186,6 +192,8 @@ export function ActionBoard({
       collisionDetection={kanbanCollision}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
+      autoScroll={{ layoutShiftCompensation: false, threshold: { x: 0.2, y: 0.2 } }}
     >
       <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:px-0">
         <Column
@@ -196,7 +204,7 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
-          onRequestEditCustomTask={onRequestEditCustomTask}
+          onRequestEditCustomTask={handleRequestEditCustomTask}
         />
         <Column
           id="in_progress"
@@ -206,7 +214,7 @@ export function ActionBoard({
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
-          onRequestEditCustomTask={onRequestEditCustomTask}
+          onRequestEditCustomTask={handleRequestEditCustomTask}
         />
         <Column
           id="done"
@@ -218,7 +226,7 @@ export function ActionBoard({
           onShowLess={onShowLessDone}
           onDismissAll={() => dismissAll.mutate(doneTaskIds)}
           isDismissAllPending={dismissAll.isPending}
-          onRequestEditCustomTask={onRequestEditCustomTask}
+          onRequestEditCustomTask={handleRequestEditCustomTask}
         />
       </div>
 
@@ -228,7 +236,7 @@ export function ActionBoard({
           easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
         }}
       >
-        {activeTask ? <TaskCard task={activeTask} isDragging /> : null}
+        {activeTask ? <TaskCardOverlay task={activeTask} /> : null}
       </DragOverlay>
     </DndContext>
   );

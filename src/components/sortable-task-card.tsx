@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
@@ -12,7 +12,7 @@ interface SortableTaskCardProps {
   onRequestEditCustomTask?: (task: TaskWithCourse) => void;
 }
 
-export function SortableTaskCard({
+const SortableTaskCardInner = function SortableTaskCard({
   task,
   onRequestEditCustomTask,
 }: SortableTaskCardProps) {
@@ -49,6 +49,7 @@ export function SortableTaskCard({
     transform: CSS.Transform.toString(transform),
     transition,
     willChange: isDragging ? "transform" : undefined,
+    touchAction: isDragging ? "none" : undefined,
   };
 
   // On desktop: spread listeners on the whole wrapper so the full card is
@@ -66,9 +67,9 @@ export function SortableTaskCard({
       className={
         isDragging
           ? undefined
-          : modalOpen || isMobile
-            ? "transition-transform duration-200"
-            : "cursor-grab transition-transform duration-200 active:cursor-grabbing"
+          : isMobile
+            ? undefined
+            : "cursor-grab active:cursor-grabbing"
       }
       {...attributes}
       // Override dnd-kit's default tabIndex={0} so the drag wrapper is not
@@ -86,4 +87,6 @@ export function SortableTaskCard({
       />
     </div>
   );
-}
+};
+
+export const SortableTaskCard = memo(SortableTaskCardInner);

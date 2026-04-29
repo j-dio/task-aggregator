@@ -116,7 +116,7 @@ export function ActionBoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "skeu-column flex w-70 shrink-0 flex-col rounded-2xl p-3 transition-all duration-200 lg:min-w-60 lg:flex-1",
+        "skeu-column flex w-70 shrink-0 flex-col rounded-2xl p-3 transition-colors duration-150 lg:min-w-60 lg:flex-1",
         isOver && "skeu-column-over",
       )}
     >
