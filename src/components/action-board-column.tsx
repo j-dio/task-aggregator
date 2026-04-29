@@ -10,7 +10,6 @@ import type {
   ActionBoardColumn as ColumnId,
 } from "@/types/task";
 import { SortableTaskCard } from "@/components/sortable-task-card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -150,7 +149,7 @@ export function ActionBoardColumn({
       </div>
 
       {/* Column body */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <SortableContext
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
@@ -195,7 +194,7 @@ export function ActionBoardColumn({
             )}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 }

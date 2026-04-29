@@ -48,6 +48,7 @@ export function SortableTaskCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    willChange: isDragging ? "transform" : undefined,
   };
 
   // On desktop: spread listeners on the whole wrapper so the full card is
@@ -63,9 +64,11 @@ export function SortableTaskCard({
       ref={setNodeRef}
       style={style}
       className={
-        modalOpen || isMobile
-          ? "transition-transform duration-200"
-          : "cursor-grab transition-transform duration-200 active:cursor-grabbing"
+        isDragging
+          ? undefined
+          : modalOpen || isMobile
+            ? "transition-transform duration-200"
+            : "cursor-grab transition-transform duration-200 active:cursor-grabbing"
       }
       {...attributes}
       // Override dnd-kit's default tabIndex={0} so the drag wrapper is not
