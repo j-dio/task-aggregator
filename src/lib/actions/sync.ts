@@ -23,6 +23,7 @@ function sanitizeErrors(errors: string[]): string[] {
     if (e.startsWith("Failed to fetch courseWork")) return "Failed to fetch some course data. Please try again.";
     if (e.startsWith("Task status lookup failed")) return "Failed to load existing task statuses. Please try again.";
     if (e.startsWith("Task upsert failed")) return "Failed to save tasks. Please try again.";
+    if (e.startsWith("Failed to load profile")) return "Failed to load your profile. Please try again.";
     if (e.startsWith("No data sources configured")) return e;
     if (e.startsWith("Google Classroom token expired")) return e;
     return "An unexpected sync error occurred.";
@@ -68,7 +69,7 @@ export async function syncAllTasks(): Promise<SyncResponse> {
   if (profileError) {
     return {
       synced: 0,
-      errors: [`Failed to load profile: ${profileError.message}`],
+      errors: sanitizeErrors([`Failed to load profile: ${profileError.message}`]),
     };
   }
 
