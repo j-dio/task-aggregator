@@ -84,7 +84,15 @@ export async function createCustomTask(input: unknown): Promise<ActionResult> {
       p_recipient_ids: shareWith,
     });
     if (shareError) {
-      // share_task verifies links; production: send to error monitoring
+      // Task row was inserted but share_task RPC failed. PostgREST does not
+      // support multi-statement transactions, so the task row already exists.
+      // Return explicit failure so the client does not show success.
+      // The caller receives the task id so it can surface or clean up the row.
+      return {
+        success: false,
+        error: "Task was saved but could not be shared. Please try again.",
+        id: task.id,
+      };
     }
     notifySharedTask(task.id, shareWith).catch(() => {
       // Swallow — push delivery is best-effort
@@ -122,14 +130,20 @@ export async function updateCustomTask(
   const { title, description, dueDate, type, courseId, priority } = parsed.data;
 
   // Guard: only allow updating custom tasks
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("tasks")
     .select("is_custom")
     .eq("id", id)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (!existing?.is_custom) {
+  if (existingError) {
+    return { success: false, error: "Failed to verify task ownership" };
+  }
+  if (existing === null) {
+    return { success: false, error: "Task not found" };
+  }
+  if (!existing.is_custom) {
     return { success: false, error: "Only custom tasks can be edited" };
   }
 
@@ -185,14 +199,20 @@ export async function deleteCustomTask(id: string): Promise<ActionResult> {
   }
 
   // Guard: only allow deleting custom tasks
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("tasks")
     .select("is_custom")
     .eq("id", id)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (!existing?.is_custom) {
+  if (existingError) {
+    return { success: false, error: "Failed to verify task ownership" };
+  }
+  if (existing === null) {
+    return { success: false, error: "Task not found" };
+  }
+  if (!existing.is_custom) {
     return { success: false, error: "Only custom tasks can be deleted" };
   }
 

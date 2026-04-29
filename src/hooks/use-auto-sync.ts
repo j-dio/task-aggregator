@@ -25,7 +25,11 @@ export function useAutoSync() {
 
     if (stale && !onCooldown) {
       triggered.current = true;
-      sync();
+      sync(undefined, {
+        onError: () => {
+          triggered.current = false;
+        },
+      });
     }
   }, [sync, isPending]);
 }

@@ -2,11 +2,16 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { syncTasks, type SyncResult } from "@/lib/sync-engine";
+import {
+  buildTaskUpsertRows,
+  taskStatusKey,
+} from "@/lib/actions/sync-task-rows";
 import { generateCourseColor } from "@/lib/utils";
 import {
   syncErrorRequiresGoogleReconnect,
   GOOGLE_RECONNECT_USER_MESSAGE,
 } from "@/lib/google-sync-errors";
+import type { TaskSource, TaskStatus } from "@/types/task";
 
 /** Sanitize error messages before sending to the client to prevent leaking server internals. */
 function sanitizeErrors(errors: string[]): string[] {
@@ -16,7 +21,9 @@ function sanitizeErrors(errors: string[]): string[] {
     if (e.startsWith("GClassroom sync failed")) return "Google Classroom sync encountered an error. Please try again.";
     if (e.startsWith("Google token refresh failed")) return "Google token refresh failed. Try reconnecting in Settings.";
     if (e.startsWith("Failed to fetch courseWork")) return "Failed to fetch some course data. Please try again.";
+    if (e.startsWith("Task status lookup failed")) return "Failed to load existing task statuses. Please try again.";
     if (e.startsWith("Task upsert failed")) return "Failed to save tasks. Please try again.";
+    if (e.startsWith("Failed to load profile")) return "Failed to load your profile. Please try again.";
     if (e.startsWith("No data sources configured")) return e;
     if (e.startsWith("Google Classroom token expired")) return e;
     return "An unexpected sync error occurred.";
@@ -62,7 +69,7 @@ export async function syncAllTasks(): Promise<SyncResponse> {
   if (profileError) {
     return {
       synced: 0,
-      errors: [`Failed to load profile: ${profileError.message}`],
+      errors: sanitizeErrors([`Failed to load profile: ${profileError.message}`]),
     };
   }
 
@@ -200,30 +207,42 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     }
   }
 
-  // Upsert tasks
-  const taskRows = result.tasks.map((t) => {
-    const courseKey = t.courseExternalId
-      ? `${t.courseExternalId}:${t.source}`
-      : null;
-    const row: Record<string, unknown> = {
-      user_id: user.id,
-      external_id: t.externalId,
-      source: t.source,
-      title: t.title,
-      description: t.description,
-      due_date: t.dueDate,
-      type: t.type,
-      course_id: courseKey ? (courseMap.get(courseKey) ?? null) : null,
+  const externalIds = Array.from(new Set(result.tasks.map((t) => t.externalId)));
+  const existingStatuses = new Map<string, TaskStatus>();
+  const { data: existingTasks, error: existingTasksError } = await supabase
+    .from("tasks")
+    .select("external_id, source, status")
+    .eq("user_id", user.id)
+    .in("external_id", externalIds);
+
+  if (existingTasksError) {
+    return {
+      synced: 0,
+      errors: sanitizeErrors([
+        ...result.errors,
+        `Task status lookup failed: ${existingTasksError.message}`,
+      ]),
     };
-    // Only include url if present (column may not exist yet in older schemas)
-    if (t.url) {
-      row.url = t.url;
+  }
+
+  if (existingTasks) {
+    for (const task of existingTasks as Array<{
+      external_id: string;
+      source: TaskSource;
+      status: TaskStatus;
+    }>) {
+      existingStatuses.set(
+        taskStatusKey(task.external_id, task.source),
+        task.status,
+      );
     }
-    // Only include status when the parser explicitly set it (e.g. GC submission)
-    if (t.status) {
-      row.status = t.status;
-    }
-    return row;
+  }
+
+  const taskRows = buildTaskUpsertRows({
+    tasks: result.tasks,
+    userId: user.id,
+    courseMap,
+    existingStatuses,
   });
 
   const { error: taskError } = await supabase.from("tasks").upsert(taskRows, {

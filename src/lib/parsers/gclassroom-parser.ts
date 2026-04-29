@@ -1,7 +1,7 @@
 // Google Classroom parser for Task Aggregator
 
 import { z } from "zod";
-import type { ParsedTask } from "../../types/task";
+import type { ParsedTask, TaskStatus } from "../../types/task";
 
 // Zod schemas for Google Classroom API responses
 export const GClassroomCourseSchema = z.object({
@@ -59,7 +59,23 @@ function formatDueDate(
   return `${y}-${m}-${d}T${h}:${min}:${s}`;
 }
 
-const SUBMITTED_STATES = new Set(["TURNED_IN", "RETURNED"]);
+/**
+ * The app has no dedicated "needs revision" status. Classroom RETURNED often means
+ * graded/returned, so mapping it to done avoids resurrecting old no-deadline work.
+ * Unknown states return undefined so sync can preserve the existing DB status.
+ */
+function mapSubmissionStateToStatus(state: string): TaskStatus | undefined {
+  switch (state) {
+    case "TURNED_IN":
+    case "RETURNED":
+      return "done";
+    case "DRAFT":
+    case "RECLAIMED_BY_STUDENT":
+      return "in_progress";
+    default:
+      return undefined;
+  }
+}
 
 // Convert Google Classroom courseWork array to ParsedTask[]
 export function parseGClassroomResponse(
@@ -85,7 +101,10 @@ export function parseGClassroomResponse(
           url: cw.alternateLink ?? null,
         };
         if (subState) {
-          task.status = SUBMITTED_STATES.has(subState) ? "done" : "pending";
+          const status = mapSubmissionStateToStatus(subState);
+          if (status) {
+            task.status = status;
+          }
         }
         return task;
       } catch {

@@ -1,19 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type {
-  TaskUrgency,
-  TaskWithCourse,
-  TaskDisplayStatus,
-} from "@/types/task";
-
-export type SortOption = "due-date" | "priority" | "type" | "title";
-
-const PRIORITY_ORDER: Record<string, number> = {
-  urgent: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
+import type { TaskUrgency } from "@/types/task";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -45,14 +32,6 @@ export function formatRelativeDate(date: Date): string {
 }
 
 /**
- * Check if a task is overdue based on its due date.
- */
-export function isOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false;
-  return new Date(dueDate) < new Date();
-}
-
-/**
  * Classify task urgency based on due date.
  * - overdue: past due
  * - urgent: due within 24 hours
@@ -73,126 +52,6 @@ export function getTaskUrgency(dueDate: string | null): TaskUrgency {
   if (diffHours < 72) return "soon";
   if (diffHours < 168) return "upcoming";
   return "later";
-}
-
-/**
- * Build a comparator function based on the active sort option.
- */
-export function getTaskComparator(
-  sort: SortOption = "due-date",
-): (a: TaskWithCourse, b: TaskWithCourse) => number {
-  return (a, b) => {
-    switch (sort) {
-      case "priority": {
-        const pa = PRIORITY_ORDER[a.priority ?? ""] ?? 99;
-        const pb = PRIORITY_ORDER[b.priority ?? ""] ?? 99;
-        if (pa !== pb) return pa - pb;
-        // Fall back to due date
-        break;
-      }
-      case "type": {
-        const cmp = (a.type ?? "").localeCompare(b.type ?? "");
-        if (cmp !== 0) return cmp;
-        break;
-      }
-      case "title":
-        return (a.title ?? "").localeCompare(b.title ?? "");
-      default:
-        break;
-    }
-    // Default / fallback: due date ascending
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-  };
-}
-
-interface GroupOptions {
-  /** Active status filter — when set to done/dismissed, include those tasks */
-  statusFilter?: TaskDisplayStatus;
-  /** Sort applied within each bucket */
-  sort?: SortOption;
-}
-
-/**
- * Group tasks into urgency buckets for the board view.
- * When statusFilter is "done" or "dismissed", those tasks are shown in the
- * "later" bucket instead of being hidden.
- */
-export function groupTasksByUrgency(
-  tasks: TaskWithCourse[],
-  options: GroupOptions = {},
-) {
-  const { statusFilter, sort = "due-date" } = options;
-  const showCompleted = statusFilter === "done" || statusFilter === "dismissed";
-
-  const buckets = {
-    overdue: [] as TaskWithCourse[],
-    today: [] as TaskWithCourse[],
-    thisWeek: [] as TaskWithCourse[],
-    later: [] as TaskWithCourse[],
-  };
-
-  for (const task of tasks) {
-    // Only skip done/dismissed when no explicit status filter is active
-    if (
-      !showCompleted &&
-      (task.status === "done" || task.status === "dismissed")
-    )
-      continue;
-
-    // Done/dismissed tasks go to "later" bucket for display
-    if (
-      showCompleted &&
-      (task.status === "done" || task.status === "dismissed")
-    ) {
-      buckets.later.push(task);
-      continue;
-    }
-
-    const urgency = getTaskUrgency(task.dueDate);
-    switch (urgency) {
-      case "overdue":
-        buckets.overdue.push(task);
-        break;
-      case "urgent":
-        buckets.today.push(task);
-        break;
-      case "soon":
-      case "upcoming":
-        buckets.thisWeek.push(task);
-        break;
-      default:
-        buckets.later.push(task);
-        break;
-    }
-  }
-
-  const comparator = getTaskComparator(sort);
-  buckets.overdue.sort(comparator);
-  buckets.today.sort(comparator);
-  buckets.thisWeek.sort(comparator);
-  buckets.later.sort(comparator);
-
-  return buckets;
-}
-
-/**
- * Group tasks by day for the week view.
- */
-export function groupTasksByDay(
-  tasks: TaskWithCourse[],
-): Map<string, TaskWithCourse[]> {
-  const groups = new Map<string, TaskWithCourse[]>();
-  for (const task of tasks) {
-    const key = task.dueDate
-      ? new Date(task.dueDate).toISOString().slice(0, 10)
-      : "no-date";
-    const list = groups.get(key) ?? [];
-    list.push(task);
-    groups.set(key, list);
-  }
-  return groups;
 }
 
 /**
@@ -220,37 +79,6 @@ export function getCourseColor(
   if (courseColor) return courseColor;
   if (!courseId) return "hsl(0, 70%, 60%)";
   return generateCourseColor(courseId);
-}
-
-/**
- * Get the start of a week (Monday) for a given date.
- */
-export function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-/**
- * Get array of 7 dates for a week starting from Monday.
- */
-export function getWeekDays(weekStart: Date): Date[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-}
-
-/**
- * Format a date as a short day label (e.g., "Mon 24").
- */
-export function formatDayLabel(date: Date): string {
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return `${days[date.getDay()]} ${date.getDate()}`;
 }
 
 /**

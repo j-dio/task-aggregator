@@ -12,14 +12,7 @@ import type {
   TapperInvite,
   TapperSummary,
 } from "@/types/tappers";
-
-const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // 31 chars, no 0/O/1/I/L
-
-function generateInviteCode(length = 12): string {
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (byte) => ALPHABET[byte % ALPHABET.length]!).join("");
-}
+import { generateInviteCode } from "@/lib/invite-code";
 
 export type CreateInviteResult =
   | { success: true; code: string; expiresAt: string }

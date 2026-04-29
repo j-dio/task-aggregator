@@ -53,4 +53,46 @@ describe("parseGClassroomResponse", () => {
     expect(result).toHaveLength(1);
     expect(result[0].dueDate).toBeNull();
   });
+
+  it("should map Classroom submission states to task statuses", () => {
+    const courseWork = [
+      { id: "draft", title: "Draft", state: "PUBLISHED", courseId: "c1" },
+      {
+        id: "reclaimed",
+        title: "Reclaimed",
+        state: "PUBLISHED",
+        courseId: "c1",
+      },
+      {
+        id: "returned",
+        title: "Returned",
+        state: "PUBLISHED",
+        courseId: "c1",
+      },
+      {
+        id: "turned-in",
+        title: "Turned in",
+        state: "PUBLISHED",
+        courseId: "c1",
+      },
+      { id: "new", title: "New", state: "PUBLISHED", courseId: "c1" },
+    ];
+    const submissions = new Map([
+      ["draft", "DRAFT"],
+      ["reclaimed", "RECLAIMED_BY_STUDENT"],
+      ["returned", "RETURNED"],
+      ["turned-in", "TURNED_IN"],
+      ["new", "NEW"],
+    ]);
+
+    const result = parseGClassroomResponse({ courseWork }, submissions);
+
+    expect(result.map((task) => [task.externalId, task.status])).toEqual([
+      ["draft", "in_progress"],
+      ["reclaimed", "in_progress"],
+      ["returned", "done"],
+      ["turned-in", "done"],
+      ["new", undefined],
+    ]);
+  });
 });
