@@ -1,6 +1,7 @@
 // Sync engine for Task Aggregator
 // Orchestrates task ingestion from UVEC and Google Classroom
 
+import * as Sentry from "@sentry/nextjs";
 import type { ParsedTask } from "../types/task";
 import { GClassroomService } from "../services/gclassroom-service";
 import { refreshGoogleAccessToken } from "../services/gclassroom-service";
@@ -50,18 +51,23 @@ async function fetchGoogleClassroomData(
 
   const allCourseWork: unknown[] = [];
   const allSubmissions = new Map<string, string>();
-  for (const result of results) {
+  for (const [i, result] of results.entries()) {
     if (result.status === "fulfilled") {
       allCourseWork.push(...result.value.courseWork);
       for (const [cwId, state] of result.value.submissions) {
         allSubmissions.set(cwId, state);
       }
     } else {
-      const reason =
+      const courseId = courses[i]?.id ?? "unknown";
+      const err =
         result.reason instanceof Error
-          ? result.reason.message
-          : String(result.reason);
-      errors.push(`Failed to fetch courseWork: ${reason}`);
+          ? result.reason
+          : new Error(String(result.reason));
+      Sentry.captureException(err, {
+        tags: { source: "gclassroom" },
+        extra: { courseExternalId: courseId },
+      });
+      errors.push(`Failed to fetch courseWork: ${err.message}`);
     }
   }
 
