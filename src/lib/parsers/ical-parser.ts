@@ -15,6 +15,9 @@ const ICalEventSchema = z.object({
   type: z.enum(["assignment", "quiz", "exam", "event"]),
 });
 
+/** CATEGORIES values that identify task type, not course — must not become courseExternalId. */
+const TASK_TYPE_CATEGORIES = new Set(["assignment", "quiz", "exam", "event"]);
+
 function normalizeType(category: string | undefined): TaskType {
   if (!category) return "event";
   const lower = category.toLowerCase();
@@ -31,31 +34,47 @@ function normalizeType(category: string | undefined): TaskType {
 
 /**
  * Extract a course identifier from iCal event properties.
- * Moodle/UVEC often stores the course name in CATEGORIES or as a prefix
- * in the DESCRIPTION field (e.g., "Course: Intro to CS" or
- * "[CS101] Assignment 1").
+ * Rules applied in order — first non-null match wins:
+ *
+ * 1. CATEGORIES — if present and not a bare task-type keyword
+ *    (assignment / quiz / exam / event). Moodle may set this to the course
+ *    shortname (e.g. "CS 101").
+ * 2. DESCRIPTION — line matching "Course: <name>" or "Course Name: <name>".
+ * 3. SUMMARY — bracketed prefix at the very start: "[CODE] Title".
+ *    Accepts any bracket content (most specific location signal).
+ * 4. SUMMARY — bracketed uppercase course-code pattern anywhere in the string
+ *    (e.g. "Midterm [MATH201]"). Must be uppercase letters/digits/spaces/
+ *    hyphens, 3–20 chars, to reduce false positives from freeform brackets.
  */
 function extractCourseId(
   category: string | null,
   description: string | null,
   summary: string | null,
 ): string | null {
-  // Prefer CATEGORIES — Moodle sets this to the course shortname
+  // 1. CATEGORIES — skip bare task-type values
   if (category) {
     const trimmed = category.trim();
-    if (trimmed.length > 0) return trimmed;
+    if (trimmed.length > 0 && !TASK_TYPE_CATEGORIES.has(trimmed.toLowerCase())) {
+      return trimmed;
+    }
   }
 
-  // Try to pull course from description: "Course: <name>" pattern
+  // 2. DESCRIPTION — "Course: <name>" or "Course Name: <name>"
   if (description) {
-    const courseMatch = description.match(/^Course:\s*(.+)/im);
+    const courseMatch = description.match(/^Course(?:\s+Name)?:\s*(.+)/im);
     if (courseMatch?.[1]) return courseMatch[1].trim();
   }
 
-  // Try bracketed prefix in summary: "[CS101] Assignment 1"
+  // 3. SUMMARY — bracketed prefix at start (permissive — any bracket content)
   if (summary) {
-    const bracketMatch = summary.match(/^\[([^\]]+)\]/);
-    if (bracketMatch?.[1]) return bracketMatch[1].trim();
+    const prefixMatch = summary.match(/^\[([^\]]+)\]/);
+    if (prefixMatch?.[1]) return prefixMatch[1].trim();
+  }
+
+  // 4. SUMMARY — uppercase course-code bracket anywhere (e.g. "Exam [MATH201]")
+  if (summary) {
+    const codeMatch = summary.match(/\[([A-Z][A-Z0-9 \-]{2,19})\]/);
+    if (codeMatch?.[1]) return codeMatch[1].trim();
   }
 
   return null;
