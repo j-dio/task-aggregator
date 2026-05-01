@@ -145,12 +145,13 @@
     @apply bg-background text-foreground;
   }
 
-  /* Native date/time icons are dark by default — invisible on dark inputs */
+  /* Native date/time icons are dark by default, so give them a warm dark-mode accent. */
   .dark input[type="date"]::-webkit-calendar-picker-indicator,
   .dark input[type="time"]::-webkit-calendar-picker-indicator,
   .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.2);
-    opacity: 0.92;
+    filter: brightness(0) saturate(100%) invert(58%) sepia(78%)
+      saturate(1235%) hue-rotate(333deg) brightness(96%) contrast(93%);
+    opacity: 1;
     cursor: pointer;
   }
 
