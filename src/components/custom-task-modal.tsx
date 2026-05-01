@@ -171,7 +171,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
       {/* Title */}
       <div className="space-y-1.5">
         <label
@@ -197,7 +197,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
         <span className="text-muted-foreground text-xs font-medium">
           Due date &amp; time
         </span>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Input
             id="ct-due-date"
             type="date"
@@ -225,8 +225,8 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
       </div>
 
       {/* Type + Priority row */}
-      <div className="flex gap-3">
-        <div className="flex-1 space-y-1.5">
+      <div className="flex min-w-0 gap-3">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <label className="text-muted-foreground text-xs font-medium">
             Type
           </label>
@@ -249,7 +249,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
           </Select>
         </div>
 
-        <div className="flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <label className="text-muted-foreground text-xs font-medium">
             Priority
           </label>
@@ -279,7 +279,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
 
       {/* Course */}
       {courses && courses.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label className="text-muted-foreground text-xs font-medium">
             Course
           </label>
@@ -290,11 +290,11 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
             <SelectTrigger className="h-9 w-full text-sm">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-w-[calc(100vw-2rem)]">
               <SelectItem value="none">No course (personal)</SelectItem>
               {courses.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                  <span className="block truncate">{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -470,7 +470,7 @@ export function CustomTaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md min-w-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Task" : "New Task"}</DialogTitle>
         </DialogHeader>
