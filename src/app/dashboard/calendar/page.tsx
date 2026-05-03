@@ -2,7 +2,9 @@
 
 import { Suspense, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, CalendarRange, Share2 } from "lucide-react";
+import { formatLocalDateISO, mondayOf } from "@/lib/share-week/week-utils";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
 import { useAutoSync } from "@/hooks/use-auto-sync";
@@ -171,6 +173,16 @@ function CalendarContent() {
             View tasks on their due dates.
           </p>
         </div>
+        <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <Link
+            href={`/dashboard/share-week?week=${formatLocalDateISO(
+              mondayOf(selectedDate ?? today),
+            )}`}
+          >
+            <Share2 className="size-4" />
+            <span className="hidden sm:inline">Remind them</span>
+          </Link>
+        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
