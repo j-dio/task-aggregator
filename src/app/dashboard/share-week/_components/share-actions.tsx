@@ -16,6 +16,9 @@ interface ShareActionsProps {
 
 const FILENAME = "tapo1-week.png";
 
+const SHARE_TITLE = "My week — Tapo1";
+const SHARE_TEXT = "Here’s my week from Tapo1.";
+
 async function captureBlob(node: HTMLDivElement): Promise<Blob> {
   // Wait for any custom fonts to be ready, then yield a frame so the
   // browser has finished any pending paint of the capture target. Both
@@ -53,26 +56,46 @@ export function ShareActions({ captureRef }: ShareActionsProps) {
       const blob = await captureBlob(captureRef.current);
       const file = new File([blob], FILENAME, { type: "image/png" });
 
-      const canShare =
-        typeof navigator !== "undefined" &&
-        typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [file] }) &&
-        typeof navigator.share === "function";
+      const sharePayload: ShareData = {
+        title: SHARE_TITLE,
+        text: SHARE_TEXT,
+        files: [file],
+      };
 
-      if (canShare) {
+      const canShareFiles =
+        typeof navigator.share === "function" &&
+        (typeof navigator.canShare !== "function" ||
+          navigator.canShare({ files: [file] }));
+
+      const canShareFull =
+        typeof navigator.share === "function" &&
+        (typeof navigator.canShare !== "function" ||
+          navigator.canShare(sharePayload));
+
+      if (canShareFiles) {
         try {
-          await navigator.share({ files: [file] });
+          await navigator.share(canShareFull ? sharePayload : { files: [file] });
+          return;
         } catch (err) {
-          if ((err as Error).name !== "AbortError") {
-            throw err;
+          if ((err as Error).name === "AbortError") {
+            return;
           }
+          // Fall through to clipboard / download.
         }
+      }
+
+      const copied = await copyImageToClipboard(blob);
+      if (copied) {
+        toast.success(
+          "Image copied — paste it into Instagram, Messages, or another app.",
+        );
         return;
       }
 
-      // Fallback to download when Web Share with files isn't available.
       triggerDownload(blob);
-      toast.success("Saved to your device");
+      toast.success(
+        "Saved the image — open Photos or Files and use Share from there.",
+      );
     } catch {
       toast.error("Couldn't generate the image. Try again.");
     } finally {
@@ -126,7 +149,7 @@ export function ShareActions({ captureRef }: ShareActionsProps) {
         </Button>
       </div>
       <p className="text-muted-foreground text-center text-xs">
-        🔒 Stays on your device until you share it.
+        Stays on your device until you share it.
       </p>
     </div>
   );
@@ -139,4 +162,25 @@ function triggerDownload(blob: Blob) {
   a.download = FILENAME;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+async function copyImageToClipboard(blob: Blob): Promise<boolean> {
+  if (
+    typeof navigator === "undefined" ||
+    typeof navigator.clipboard?.write !== "function" ||
+    typeof ClipboardItem === "undefined"
+  ) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        [blob.type || "image/png"]: blob,
+      }),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
