@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { AppLogo } from "@/components/app-logo";
 import { HowItWorksTimeline } from "@/components/landing/how-it-works-timeline";
 import { LandingHero } from "@/components/landing/landing-hero";
+import { WhatYouGetCarousel } from "@/components/landing/what-you-get-carousel";
+import { landingFeatures } from "@/lib/landing/features";
 
 const steps = [
   {
@@ -19,29 +21,6 @@ const steps = [
   {
     title: "Sync Google Classroom",
     desc: "Grant Classroom access and keep assignment updates in one board.",
-  },
-];
-
-const features = [
-  {
-    letter: "A",
-    title: "Drag-and-Drop Board",
-    desc: "Prioritise your week — move tasks between To-Do, In Progress, and Done.",
-  },
-  {
-    letter: "B",
-    title: "Deadline Reminders",
-    desc: "Push notifications for tasks due within 24 hours.",
-  },
-  {
-    letter: "C",
-    title: "Custom Tasks",
-    desc: "Add anything outside class platforms — study blocks, personal deadlines.",
-  },
-  {
-    letter: "D",
-    title: "Calendar & Focus View",
-    desc: "See the full month at a glance or zoom into what needs action within the day.",
   },
 ];
 
@@ -65,6 +44,8 @@ const tickerItems = [
   "UVEC + Google Classroom",
   "Drag-and-drop Kanban",
   "24h push reminders",
+  "Tappers — share with blockmates",
+  "Remind them — weekly snapshots",
   "Custom tasks",
   "No context switching",
   "Free for UP Cebu",
@@ -178,8 +159,8 @@ export default async function Home() {
       `}</style>
 
       {/* ── Sticky nav ────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5 md:px-10">
+      <header className="sticky top-0 z-50 h-14 shrink-0 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-6 md:px-10">
           <div className="flex items-center gap-2.5">
             <AppLogo className="size-6 rounded-full" />
             <span className="text-sm font-bold tracking-tight">TapO(1)</span>
@@ -193,12 +174,12 @@ export default async function Home() {
         </div>
       </header>
 
-      <div className="overflow-visible bg-background">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col bg-background">
 
         <LandingHero />
 
-        {/* ── Ticker strip ──────────────────────────────────────────── */}
-        <div className="lp-fade lp-d5 lp-ticker-wrap border-y border-border py-3.5 select-none">
+        {/* ── Ticker strip (pinned to hero bottom) ─────────────────── */}
+        <div className="lp-fade lp-d5 lp-ticker-wrap shrink-0 border-y border-border py-3.5 select-none">
           <div className="lp-ticker-track">
             {[...tickerItems, ...tickerItems].map((item, i) => (
               <span
@@ -211,6 +192,10 @@ export default async function Home() {
             ))}
           </div>
         </div>
+
+      </div>
+
+      <div className="overflow-visible bg-background">
 
         {/* ── How it works ──────────────────────────────────────────── */}
         <HowItWorksTimeline steps={steps} />
@@ -230,48 +215,14 @@ export default async function Home() {
                 What you get
               </p>
               <span className="text-[10px]" style={{ color: "oklch(1 0 0 / 28%)" }}>
-                4 features
+                {landingFeatures.length} features
               </span>
             </div>
 
-            {features.map(({ letter, title, desc }, i) => (
-              <div
-                key={letter}
-                className={`lp-up lp-d${i} py-7 md:py-9`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "3.5rem 1fr",
-                  gap: "2rem",
-                  borderTop: "1px solid oklch(1 0 0 / 10%)",
-                }}
-              >
-                <span
-                  className="font-black tracking-tighter select-none"
-                  style={{
-                    fontSize: "clamp(2rem, 4vw, 3rem)",
-                    lineHeight: 1,
-                    color: "oklch(1 0 0 / 16%)",
-                  }}
-                >
-                  {letter}
-                </span>
-                <div className="grid gap-1.5 md:grid-cols-2 md:gap-12">
-                  <h3
-                    className="text-base font-bold tracking-tight md:text-lg"
-                    style={{ color: "oklch(0.97 0 0)" }}
-                  >
-                    {title}
-                  </h3>
-                  <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: "oklch(1 0 0 / 52%)" }}
-                  >
-                    {desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-            <div style={{ borderTop: "1px solid oklch(1 0 0 / 10%)" }} />
+            <div className="lp-up lp-d1 border-t pt-10 md:pt-14" style={{ borderColor: "oklch(1 0 0 / 10%)" }}>
+              <WhatYouGetCarousel features={landingFeatures} />
+            </div>
+            <div className="mt-10 border-t md:mt-14" style={{ borderColor: "oklch(1 0 0 / 10%)" }} />
           </div>
         </section>
 

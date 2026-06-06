@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HeroBoardPreview } from "@/components/landing/hero-board-preview";
 
 const SPRING_STIFFNESS = 200;
 const SPRING_DAMPING = 11;
@@ -254,7 +255,7 @@ export function LandingHero() {
   return (
     <section
       ref={heroRef}
-      className="lp-hero-light relative mx-auto max-w-6xl overflow-visible pt-16 pb-20 md:pt-24 md:pb-28"
+      className="lp-hero-light relative mx-auto flex flex-1 w-full max-w-6xl flex-col overflow-visible px-6 pt-12 pb-8 md:px-10 md:pt-16 md:pb-10"
       style={
         {
           "--light-x": "82%",
@@ -323,7 +324,7 @@ export function LandingHero() {
       <div
         ref={anchorRef}
         className={cn(
-          "lp-logo-float absolute top-20 z-20 hidden overflow-visible md:right-20 md:block",
+          "lp-logo-float absolute top-20 z-20 hidden overflow-visible md:right-10 md:top-24 md:block lg:right-14 lg:top-28",
           dragging && "is-dragging",
           springing && "is-springing"
         )}
@@ -350,8 +351,8 @@ export function LandingHero() {
         </div>
       </div>
 
-      <div className="px-6 md:px-10">
-        <p className="lp-up lp-d0 mb-6 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <div className="flex flex-col">
+        <p className="lp-up lp-d0 mb-8 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground md:mb-10">
           Academic Task Aggregator &nbsp;·&nbsp; UP Cebu
         </p>
 
@@ -363,7 +364,7 @@ export function LandingHero() {
           TapO(1)
         </h1>
 
-        <div className="lp-up lp-d2 mt-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="lp-up lp-d2 mt-8 flex flex-col gap-4 md:mt-10 md:flex-row md:items-end md:justify-between md:gap-16">
           <p
             ref={taglineRef}
             className="font-semibold tracking-tight text-foreground"
@@ -374,14 +375,23 @@ export function LandingHero() {
           >
             Academic tracking in constant time.
           </p>
-          <p className="max-w-70 text-sm leading-relaxed text-muted-foreground">
+          <p className="max-w-xs text-sm leading-relaxed text-muted-foreground md:max-w-sm">
             Pull tasks from UVEC and Google Classroom into one drag-and-drop board.
           </p>
         </div>
+      </div>
 
-        <div ref={ruleRef} className="lp-fade lp-d3 my-8 border-t border-border" />
+      <div aria-hidden="true" className="lp-fade lp-d3 min-h-10 flex-1 flex flex-col justify-center py-6 md:py-8">
+        <HeroBoardPreview />
+        <p className="mt-2 select-none text-center text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground/35">
+          ← drag the cards →
+        </p>
+      </div>
 
-        <div className="lp-up lp-d3 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-8 md:gap-10">
+        <div ref={ruleRef} className="lp-fade lp-d3 border-t border-border" />
+
+        <div className="lp-up lp-d3 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
           <Button asChild size="lg" className="h-11 px-7 text-sm font-semibold gap-2">
             <Link href="/login">
               Get started free
@@ -396,7 +406,7 @@ export function LandingHero() {
           </a>
         </div>
 
-        <p className="lp-fade lp-d4 mt-6 text-[11px] text-muted-foreground/70">
+        <p className="lp-fade lp-d4 text-[11px] text-muted-foreground/70">
           Free for UP Cebu students · Syncs UVEC iCal + Google Classroom · Push reminders included
         </p>
       </div>
