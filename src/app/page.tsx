@@ -4,20 +4,19 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { AppLogo } from "@/components/app-logo";
+import { HowItWorksTimeline } from "@/components/landing/how-it-works-timeline";
+import { LandingHero } from "@/components/landing/landing-hero";
 
 const steps = [
   {
-    n: "01",
     title: "Sign in with Google",
     desc: "Use your UP Cebu Google account — no separate password needed.",
   },
   {
-    n: "02",
     title: "Connect UVEC Moodle",
     desc: "Paste your iCal URL once; tasks sync automatically after that.",
   },
   {
-    n: "03",
     title: "Sync Google Classroom",
     desc: "Grant Classroom access and keep assignment updates in one board.",
   },
@@ -194,66 +193,9 @@ export default async function Home() {
         </div>
       </header>
 
-      <div className="bg-background">
+      <div className="overflow-visible bg-background">
 
-        {/* ── Hero ──────────────────────────────────────────────────── */}
-        <section className="relative mx-auto max-w-6xl px-6 pt-16 pb-20 md:px-10 md:pt-24 md:pb-28">
-
-          {/* Floating logo — desktop only, top-right anchor */}
-          <div className="lp-logo-float absolute right-10 top-20 hidden md:block">
-            <AppLogo className="lp-logo-glow size-28 overflow-visible rounded-full lg:size-36" />
-          </div>
-
-          {/* Label */}
-          <p className="lp-up lp-d0 mb-6 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Academic Task Aggregator &nbsp;·&nbsp; UP Cebu
-          </p>
-
-          {/* Headline */}
-          <h1
-            className="lp-up lp-d1 font-black tracking-tighter text-foreground"
-            style={{ fontSize: "clamp(5rem, 12vw, 10.5rem)", lineHeight: 0.9 }}
-          >
-            TapO(1)
-          </h1>
-
-          {/* Tagline + description row */}
-          <div className="lp-up lp-d2 mt-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <p
-              className="font-semibold tracking-tight text-foreground"
-              style={{ fontSize: "clamp(1.4rem, 3.5vw, 2.25rem)", lineHeight: 1.15 }}
-            >
-              Academic tracking in constant time.
-            </p>
-            <p className="max-w-70 text-sm leading-relaxed text-muted-foreground">
-              Pull tasks from UVEC and Google Classroom into one drag-and-drop board.
-            </p>
-          </div>
-
-          {/* Rule */}
-          <div className="lp-fade lp-d3 my-8 border-t border-border" />
-
-          {/* CTAs */}
-          <div className="lp-up lp-d3 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="h-11 px-7 text-sm font-semibold gap-2">
-              <Link href="/login">
-                Get started free
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              See setup steps →
-            </a>
-          </div>
-
-          {/* Fine print */}
-          <p className="lp-fade lp-d4 mt-6 text-[11px] text-muted-foreground/70">
-            Free for UP Cebu students · Syncs UVEC iCal + Google Classroom · Push reminders included
-          </p>
-        </section>
+        <LandingHero />
 
         {/* ── Ticker strip ──────────────────────────────────────────── */}
         <div className="lp-fade lp-d5 lp-ticker-wrap border-y border-border py-3.5 select-none">
@@ -271,35 +213,7 @@ export default async function Home() {
         </div>
 
         {/* ── How it works ──────────────────────────────────────────── */}
-        <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20 md:px-10 md:py-28">
-
-          <div className="lp-up mb-10 flex items-baseline justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              How it works
-            </p>
-            <span className="text-[10px] text-muted-foreground/50">3 steps</span>
-          </div>
-
-          {steps.map(({ n, title, desc }, i) => (
-            <div
-              key={n}
-              className={`lp-up lp-d${i} border-t border-border py-7 md:py-9`}
-              style={{ display: "grid", gridTemplateColumns: "4.5rem 1fr", gap: "2rem" }}
-            >
-              <span
-                className="font-black tracking-tighter text-muted-foreground/20 select-none"
-                style={{ fontSize: "clamp(2.5rem, 5vw, 3.75rem)", lineHeight: 1 }}
-              >
-                {n}
-              </span>
-              <div className="grid gap-1.5 md:grid-cols-2 md:gap-12">
-                <h3 className="text-base font-bold tracking-tight md:text-lg">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
-              </div>
-            </div>
-          ))}
-          <div className="border-t border-border" />
-        </section>
+        <HowItWorksTimeline steps={steps} />
 
         {/* ── Features — inverted ───────────────────────────────────── */}
         <section
