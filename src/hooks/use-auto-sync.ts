@@ -14,7 +14,7 @@ import {
  * Safe to call in multiple components — only fires once per threshold.
  */
 export function useAutoSync() {
-  const { mutate: sync, isPending } = useSync();
+  const { mutate: sync, isPending } = useSync({ silent: true });
   const triggered = useRef(false);
 
   useEffect(() => {

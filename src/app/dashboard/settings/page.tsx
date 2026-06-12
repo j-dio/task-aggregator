@@ -233,9 +233,19 @@ export default function SettingsPage() {
         } catch {
           // body isn't JSON, use as-is
         }
+        // Simplify verbose upstream errors; strip URLs to avoid leaking auth tokens
+        let userMessage: string;
+        if (detail.toLowerCase().includes("timed out") || detail.toLowerCase().includes("connection refused")) {
+          userMessage = "UVEC server is unreachable. It may be down or blocking the proxy. Try again later.";
+        } else if (resp.status === 502 || resp.status === 503) {
+          userMessage = "Proxy could not reach UVEC. Check that your URL is correct and try again.";
+        } else {
+          // Strip any URLs (may contain auth tokens) from the message
+          userMessage = detail.replace(/https?:\/\/\S+/g, "[URL]");
+        }
         setTestResult({
           ok: false,
-          message: `Proxy returned ${resp.status}. ${detail}`,
+          message: userMessage,
         });
       } else {
         const text = await resp.text();

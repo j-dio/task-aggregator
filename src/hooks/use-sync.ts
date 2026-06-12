@@ -18,13 +18,13 @@ const STORAGE_KEY = "task-agg:lastSyncAtMs";
 
 function readLastSyncAt(): number {
   if (typeof window === "undefined") return 0;
-  const stored = sessionStorage.getItem(STORAGE_KEY);
+  const stored = localStorage.getItem(STORAGE_KEY);
   return stored ? Number(stored) : 0;
 }
 
 function writeLastSyncAt(ms: number): void {
   if (typeof window !== "undefined") {
-    sessionStorage.setItem(STORAGE_KEY, String(ms));
+    localStorage.setItem(STORAGE_KEY, String(ms));
   }
 }
 
@@ -55,7 +55,7 @@ function recordSyncAttempt(): void {
   writeLastSyncAt(lastSyncAtMs);
 }
 
-export function useSync() {
+export function useSync({ silent = false }: { silent?: boolean } = {}) {
   const queryClient = useQueryClient();
 
   return useMutation<SyncResponse, Error>({
@@ -80,37 +80,39 @@ export function useSync() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
 
-      // Surface toast notifications
-      if (error) {
-        const msg = error.message;
-        if (syncErrorRequiresGoogleReconnect(msg)) {
-          toast.error("Reconnect Google", {
-            id: "sync",
-            description: GOOGLE_RECONNECT_USER_MESSAGE,
-            duration: 12_000,
-          });
-        } else {
-          toast.error("Sync failed", { id: "sync", description: msg });
-        }
-      } else if (_data) {
-        const { errors: warnings } = _data;
-        if (warnings.length === 0) {
-          toast.success("Synced successfully", { id: "sync" });
-        } else if (warningsNeedGoogleReconnect(warnings)) {
-          const desc =
-            warnings.find((w) =>
-              w.includes("Google Classroom disconnected"),
-            ) ?? GOOGLE_RECONNECT_USER_MESSAGE;
-          toast.error("Reconnect Google to update Classroom", {
-            id: "sync",
-            description: desc,
-            duration: 12_000,
-          });
-        } else {
-          toast.warning("Synced with warnings", {
-            id: "sync",
-            description: warnings[0],
-          });
+      // Surface toast notifications (suppressed for auto-sync)
+      if (!silent) {
+        if (error) {
+          const msg = error.message;
+          if (syncErrorRequiresGoogleReconnect(msg)) {
+            toast.error("Reconnect Google", {
+              id: "sync",
+              description: GOOGLE_RECONNECT_USER_MESSAGE,
+              duration: 12_000,
+            });
+          } else {
+            toast.error("Sync failed", { id: "sync", description: msg });
+          }
+        } else if (_data) {
+          const { errors: warnings } = _data;
+          if (warnings.length === 0) {
+            toast.success("Synced successfully", { id: "sync" });
+          } else if (warningsNeedGoogleReconnect(warnings)) {
+            const desc =
+              warnings.find((w) =>
+                w.includes("Google Classroom disconnected"),
+              ) ?? GOOGLE_RECONNECT_USER_MESSAGE;
+            toast.error("Reconnect Google to update Classroom", {
+              id: "sync",
+              description: desc,
+              duration: 12_000,
+            });
+          } else {
+            toast.warning("Synced with warnings", {
+              id: "sync",
+              description: warnings[0],
+            });
+          }
         }
       }
     },
