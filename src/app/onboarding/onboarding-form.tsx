@@ -28,6 +28,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const EXPO_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+const QUART_EASE = "cubic-bezier(0.25, 1, 0.5, 1)";
+
 const SETUP_STEPS = [
   {
     step: 1,
@@ -112,18 +115,21 @@ function StepChip({
   return (
     <li
       className={cn(
-        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 rounded-xl border p-2.5 transition-all motion-safe:duration-300 motion-reduce:animate-none",
+        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 rounded-xl border p-3 transition-all duration-200 motion-safe:duration-300 motion-reduce:animate-none",
         state === "complete" && "border-success/35 bg-success/10",
         state === "active" &&
           "border-primary/45 bg-primary/8 shadow-primary/10 shadow-sm",
         state === "pending" && "border-border bg-muted/35",
       )}
-      style={{ animationDelay: delay }}
+      style={{
+        animationDelay: delay,
+        animationTimingFunction: EXPO_EASE,
+      }}
     >
       <div className="flex items-start gap-3">
         <div
           className={cn(
-            "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+            "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors duration-200",
             state === "complete" &&
               "border-success bg-success text-success-foreground",
             state === "active" &&
@@ -136,8 +142,15 @@ function StepChip({
           {state === "complete" ? <Check className="size-3.5" /> : step}
         </div>
         <div className="space-y-1">
-          <p className="text-sm leading-tight font-semibold">{title}</p>
-          <p className="text-muted-foreground text-xs leading-relaxed">
+          <p className="text-sm font-semibold leading-tight">{title}</p>
+          <p
+            className={cn(
+              "text-sm leading-relaxed transition-colors duration-200",
+              state === "active"
+                ? "text-foreground/70"
+                : "text-muted-foreground",
+            )}
+          >
             {helper}
           </p>
         </div>
@@ -280,22 +293,34 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
 
   return (
     <div className="flex w-full flex-col gap-8 sm:gap-10">
+      {/* Hero — staggered entrance: h1 first, subtitle follows */}
       <header className="mx-auto max-w-2xl text-center">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1
+          className="text-balance text-3xl font-bold tracking-tight sm:text-4xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-3 motion-safe:duration-700 motion-reduce:animate-none"
+          style={{ animationTimingFunction: EXPO_EASE }}
+        >
           Welcome, {displayName}!
         </h1>
-        <p className="text-muted-foreground mt-3 text-pretty text-sm leading-relaxed sm:text-base">
+        <p
+          className="text-foreground/65 mt-3 text-base leading-relaxed text-pretty sm:text-lg motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-reduce:animate-none"
+          style={{ animationDelay: "120ms", animationTimingFunction: EXPO_EASE }}
+        >
           Add your UVEC export link so UVEC and Classroom live in one board.
         </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(260px,290px)_minmax(0,1fr)] lg:items-stretch lg:gap-10">
-        <Card className="border-primary/25 bg-card/95 flex h-full min-h-0 flex-col backdrop-blur-sm">
+        {/* Left sidebar — slides in from left after hero settles */}
+        <Card
+          className="border-primary/25 bg-card/95 flex h-full min-h-0 flex-col backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-3 motion-safe:duration-500 motion-reduce:animate-none"
+          style={{ animationDelay: "200ms", animationTimingFunction: EXPO_EASE }}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Setup progress</CardTitle>
             <CardDescription>Four steps, then the dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-4">
+            {/* Chips stagger in after the card appears (base delay 350ms) */}
             <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
               {stepStates.map(({ step, title, helper, state }, index) => (
                 <StepChip
@@ -304,27 +329,27 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   title={title}
                   helper={helper}
                   state={state}
-                  delay={`${index * 70}ms`}
+                  delay={`${350 + index * 70}ms`}
                 />
               ))}
             </ol>
 
             <div className="border-border/70 bg-muted/35 mt-auto rounded-lg border p-3">
-              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                Next
+              <p className="text-muted-foreground text-xs font-medium">
+                What you get
               </p>
-              <ul className="mt-2 space-y-1.5 text-xs leading-snug sm:text-sm">
+              <ul className="mt-2 space-y-1.5 text-sm leading-snug">
                 <li className="flex gap-2">
                   <Check className="text-success mt-0.5 size-4 shrink-0" />
-                  Classroom syncs from the dashboard.
+                  <span>Classroom syncs from the dashboard.</span>
                 </li>
                 <li className="flex gap-2">
                   <Link2 className="text-primary mt-0.5 size-4 shrink-0" />
-                  UVEC URL adds UVEC tasks.
+                  <span>UVEC URL adds UVEC tasks.</span>
                 </li>
                 <li className="flex gap-2">
                   <Sparkles className="text-info mt-0.5 size-4 shrink-0" />
-                  Skip UVEC anytime — add it later in settings.
+                  <span>Skip UVEC anytime — add it later in settings.</span>
                 </li>
               </ul>
             </div>
@@ -334,14 +359,21 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
         <div className="flex min-h-0 flex-col gap-4">
           {currentView === "uvec" ? (
             <>
-              <Card className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-reduce:animate-none">
+              {/* Google Classroom card */}
+              <Card
+                className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-reduce:animate-none"
+                style={{
+                  animationDelay: "280ms",
+                  animationTimingFunction: EXPO_EASE,
+                }}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-success/20 flex size-8 items-center justify-center rounded-full">
                       <Check className="text-success size-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-base">Google Classroom</CardTitle>
+                      <CardTitle className="text-lg">Google Classroom</CardTitle>
                       <CardDescription>
                         Signed in — first sync runs from the dashboard.
                       </CardDescription>
@@ -350,14 +382,21 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                 </CardHeader>
               </Card>
 
-              <Card className="border-primary/30 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-reduce:animate-none">
+              {/* UVEC card */}
+              <Card
+                className="border-primary/30 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-reduce:animate-none"
+                style={{
+                  animationDelay: "380ms",
+                  animationTimingFunction: EXPO_EASE,
+                }}
+              >
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="bg-primary/20 flex size-8 items-center justify-center rounded-full">
                       <Calendar className="text-primary size-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-base">UVEC</CardTitle>
+                      <CardTitle className="text-lg">UVEC</CardTitle>
                       <CardDescription>
                         Paste the calendar export URL from UVEC.
                       </CardDescription>
@@ -369,71 +408,123 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   <button
                     type="button"
                     onClick={() => setShowGuide((prev) => !prev)}
-                    className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm font-medium"
+                    className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm font-medium transition-colors duration-150"
                   >
                     <ChevronRight
                       className={cn(
-                        "size-4 transition-transform motion-reduce:transition-none",
+                        "size-4 transition-transform duration-300 motion-reduce:transition-none",
                         showGuide && "rotate-90",
                       )}
+                      style={{ transitionTimingFunction: QUART_EASE }}
                     />
                     {showGuide ? "Hide" : "Show"} steps
                   </button>
 
-                  {showGuide && (
-                    <div className="bg-muted/40 grid gap-2 rounded-xl border p-3">
-                      {ICAL_STEPS.map(({ step, title, description }, index) => {
-                        const itemState: StepState =
-                          step < guideFocusStep
-                            ? "complete"
-                            : step === guideFocusStep
-                              ? "active"
-                              : "pending";
+                  {/*
+                   * Guide expand/collapse via grid-rows transition.
+                   * Always in DOM so the transition plays; aria-hidden hides from AT when closed.
+                   * motion-reduce: instant snap (no transition), hidden when closed.
+                   */}
+                  <div
+                    className={cn(
+                      "grid [transition:grid-template-rows_350ms_cubic-bezier(0.25,1,0.5,1)] motion-reduce:transition-none",
+                      showGuide
+                        ? "[grid-template-rows:1fr]"
+                        : "[grid-template-rows:0fr]",
+                      !showGuide && "motion-reduce:hidden",
+                    )}
+                    aria-hidden={!showGuide}
+                  >
+                    <div className="overflow-hidden min-h-0">
+                      {/* Timeline — lines draw in, rows stagger */}
+                      <div className="flex flex-col pl-1 pt-1 pb-1">
+                        {ICAL_STEPS.map(({ step, title, description }, index) => {
+                          const itemState: StepState =
+                            step < guideFocusStep
+                              ? "complete"
+                              : step === guideFocusStep
+                                ? "active"
+                                : "pending";
+                          const isLast = index === ICAL_STEPS.length - 1;
+                          const rowDelay = `${index * 60}ms`;
+                          const lineDelay = `${index * 60 + 50}ms`;
 
-                        return (
-                          <div
-                            key={step}
-                            className={cn(
-                              "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 rounded-lg border p-2.5 transition-all motion-safe:duration-250 motion-reduce:animate-none",
-                              itemState === "complete" &&
-                                "border-success/35 bg-success/10",
-                              itemState === "active" &&
-                                "border-primary/40 bg-primary/10",
-                              itemState === "pending" && "border-border bg-card/70",
-                            )}
-                            style={{ animationDelay: `${index * 60}ms` }}
-                          >
-                            <div className="flex gap-3">
-                              <div
-                                className={cn(
-                                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-                                  itemState === "complete" &&
-                                    "border-success bg-success text-success-foreground",
-                                  itemState === "active" &&
-                                    "border-primary bg-primary text-primary-foreground",
-                                  itemState === "pending" &&
-                                    "border-input bg-background text-muted-foreground",
-                                )}
-                                aria-hidden="true"
-                              >
-                                {itemState === "complete" ? (
-                                  <Check className="size-3.5" />
-                                ) : (
-                                  step
+                          return (
+                            <div
+                              key={step}
+                              className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-1 flex gap-4 motion-safe:duration-300 motion-reduce:animate-none"
+                              style={{
+                                animationDelay: rowDelay,
+                                animationTimingFunction: EXPO_EASE,
+                              }}
+                            >
+                              <div className="flex flex-col items-center">
+                                <div
+                                  className={cn(
+                                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-colors duration-200",
+                                    itemState === "complete" &&
+                                      "border-success bg-success text-success-foreground",
+                                    itemState === "active" &&
+                                      "border-primary bg-primary text-primary-foreground",
+                                    itemState === "pending" &&
+                                      "border-input bg-background text-muted-foreground",
+                                  )}
+                                  aria-hidden="true"
+                                >
+                                  {itemState === "complete" ? (
+                                    <Check className="size-3.5" />
+                                  ) : (
+                                    step
+                                  )}
+                                </div>
+                                {!isLast && (
+                                  /* Line draws from top down, staggered after its row */
+                                  <div
+                                    className={cn(
+                                      "my-1 w-px flex-1 timeline-line-draw transition-colors duration-300",
+                                      itemState === "complete"
+                                        ? "bg-success/40"
+                                        : "bg-border",
+                                    )}
+                                    style={{ animationDelay: lineDelay }}
+                                  />
                                 )}
                               </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium">{title}</p>
-                                <p className="text-muted-foreground text-xs leading-snug sm:text-sm">
+                              <div
+                                className={cn(
+                                  "min-w-0",
+                                  isLast ? "pb-0" : "pb-4",
+                                )}
+                              >
+                                <p
+                                  className={cn(
+                                    "text-sm font-semibold leading-tight transition-colors duration-200",
+                                    itemState === "active"
+                                      ? "text-foreground"
+                                      : itemState === "complete"
+                                        ? "text-foreground/60"
+                                        : "text-muted-foreground",
+                                  )}
+                                >
+                                  {title}
+                                </p>
+                                <p
+                                  className={cn(
+                                    "mt-1 text-sm leading-relaxed transition-colors duration-200",
+                                    itemState === "active"
+                                      ? "text-foreground/65"
+                                      : "text-muted-foreground",
+                                  )}
+                                >
                                   {description}
                                 </p>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {submitState === "saving" && (
                     <StatusBanner
@@ -460,7 +551,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <div
                       className={cn(
-                        "rounded-xl border p-3 transition-colors motion-reduce:transition-none",
+                        "rounded-xl border p-3 transition-colors duration-200 motion-reduce:transition-none",
                         isInputFocused
                           ? "border-primary/45 bg-primary/5"
                           : "border-border bg-background",
@@ -490,10 +581,13 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                         disabled={isPending}
                         autoComplete="off"
                       />
+                      {/* Color transition communicates validation state */}
                       <p
                         className={cn(
-                          "mt-1.5 text-xs",
-                          isUrlValid ? "text-success" : "text-muted-foreground",
+                          "mt-1.5 text-xs transition-colors duration-200",
+                          isUrlValid
+                            ? "text-success"
+                            : "text-muted-foreground",
                         )}
                       >
                         {getUrlHelperText(trimmedUrl, isUrlValid)}
@@ -504,7 +598,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                       type="submit"
                       disabled={isPending || !trimmedUrl}
                       size="lg"
-                      className="shadow-primary/20 h-11 font-semibold shadow-sm transition-all motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md motion-reduce:transform-none"
+                      className="shadow-primary/20 h-11 font-semibold shadow-sm transition-all duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md motion-reduce:transform-none"
                     >
                       {isPending || submitState === "saving" ? (
                         <>
@@ -513,7 +607,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                         </>
                       ) : submitState === "success" ? (
                         <>
-                          <Check className="size-4" />
+                          <Check className="size-4 motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-300 motion-reduce:animate-none" />
                           UVEC connected
                         </>
                       ) : (
@@ -528,20 +622,22 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
               </Card>
             </>
           ) : (
-            <Card className="border-primary/30 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-reduce:animate-none">
+            <Card
+              className="border-primary/30 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-reduce:animate-none"
+              style={{ animationTimingFunction: EXPO_EASE }}
+            >
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="bg-primary/20 flex size-8 items-center justify-center rounded-full">
                     <Users2 className="text-primary size-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">
-                      Link with classmates (Optional)
+                    <CardTitle className="text-lg">
+                      Link with classmates
                     </CardTitle>
                     <CardDescription>
-                      Tappers lets you link with classmates so you can share
-                      verbally-assigned tasks with each other. You can always do
-                      this later from the Tappers page.
+                      Optional — share verbally-assigned tasks with classmates.
+                      You can always do this later from the Tappers page.
                     </CardDescription>
                   </div>
                 </div>
@@ -602,12 +698,14 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500 motion-reduce:animate-none"
+        style={{ animationDelay: "600ms", animationTimingFunction: EXPO_EASE }}
+      >
         {currentView === "uvec" ? (
           <button
             type="button"
             onClick={handleSkip}
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-150"
             disabled={isPending}
           >
             Skip UVEC for now
@@ -616,7 +714,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-150"
           >
             {generatedCode ? "Continue to dashboard" : "Skip for now"}
           </button>

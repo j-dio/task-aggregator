@@ -413,6 +413,20 @@
   }
 }
 
+/* ── Onboarding: timeline line draw ────────────────────────────────────── */
+
+@keyframes timeline-line-grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .timeline-line-draw {
+    transform-origin: top center;
+    animation: timeline-line-grow 500ms cubic-bezier(0.25, 1, 0.5, 1) both;
+  }
+}
+
 /* ── Sonner toast: enter animation ────────────────────────────────────────*/
 
 [data-sonner-toast] {
