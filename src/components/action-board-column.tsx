@@ -29,9 +29,9 @@ const columnIcons: Record<ColumnId, LucideIcon> = {
 };
 
 const columnAccentBg: Record<ColumnId, string> = {
-  todo: "bg-info/10 text-info",
-  in_progress: "bg-warning/10 text-warning",
-  done: "bg-success/10 text-success",
+  todo: "bg-info/15 text-info",
+  in_progress: "bg-warning/15 text-warning",
+  done: "bg-success/15 text-success",
 };
 
 // ---- Per-column empty state ------------------------------------------------
@@ -122,10 +122,10 @@ export function ActionBoardColumn({
     >
       {/* Column header */}
       <div className="mb-3 flex min-h-8 items-center gap-2 px-0.5">
-        <div className={cn("flex size-6 shrink-0 items-center justify-center rounded-md", columnAccentBg[id])}>
-          <Icon className="size-3.5" />
+        <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-md", columnAccentBg[id])}>
+          <Icon className="size-4" />
         </div>
-        <span className="text-sm font-bold tracking-tight">{title}</span>
+        <span className="text-sm font-black tracking-tight">{title}</span>
         {id === "done" && onDismissAll && (
           <Button
             variant="ghost"

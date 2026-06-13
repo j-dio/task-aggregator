@@ -21,7 +21,7 @@ import { SharedTasksFeed } from "@/components/tappers/shared-tasks-feed";
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-3">
-      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+      <span className="text-foreground/70 text-[13px] font-semibold">
         {children}
       </span>
       <div className="flex-1 border-t" />
@@ -106,10 +106,10 @@ export default function TappersPage() {
   const hasInvite = invite != null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 p-4 md:p-6">
+    <div className="mx-auto max-w-2xl space-y-7">
       <TappersInviteQueryToasts />
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tappers</h1>
+        <h1 className="text-2xl font-black tracking-tight">Tappers</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Invite a classmate to link accounts. Shared tasks live in the Shared
           Tasks tab.
@@ -132,7 +132,7 @@ export default function TappersPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tappers" className="mt-8 space-y-10">
+        <TabsContent value="tappers" className="mt-6 space-y-8">
           <section className="space-y-3">
             <SectionLabel>Your invite code</SectionLabel>
             {!inviteReady ? (
@@ -151,14 +151,11 @@ export default function TappersPage() {
             )}
           </section>
 
-          <section className="space-y-3">
-            <SectionLabel>Link with a classmate</SectionLabel>
-            <AcceptInviteForm
-              onSuccess={() => {
-                void refetch();
-              }}
-            />
-          </section>
+          <AcceptInviteForm
+            onSuccess={() => {
+              void refetch();
+            }}
+          />
 
           <section className="space-y-3">
             <SectionLabel>Your Tappers</SectionLabel>

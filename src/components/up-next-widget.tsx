@@ -49,19 +49,19 @@ export function UpNextWidget({
     <>
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl border-2 bg-linear-to-br p-4",
+          "relative overflow-hidden rounded-xl border-2 bg-linear-to-br p-5",
           urgencyGradient[urgency],
           isInProgress ? "border-warning" : "border-primary",
         )}
       >
         {/* Header */}
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-4 flex items-center gap-2">
           <div
             className={cn(
               "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
               isInProgress
-                ? "bg-warning/20 text-warning"
-                : "bg-primary/20 text-primary",
+                ? "bg-warning text-warning-foreground"
+                : "bg-primary text-primary-foreground",
             )}
           >
             {isInProgress ? (
@@ -85,7 +85,7 @@ export function UpNextWidget({
         </h3>
 
         {/* Meta info */}
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-5 flex flex-wrap items-center gap-2">
           <CourseBadge course={task.course} />
           {task.dueDate && (
             <span

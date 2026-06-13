@@ -70,8 +70,8 @@ export function SidebarNav({
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5">
-        <AppLogo className="size-8 shrink-0" />
-        <span className="text-sm font-bold tracking-[-0.02em]">TapO(1)</span>
+        <AppLogo className="size-9 shrink-0" />
+        <span className="text-[15px] font-black tracking-tight">TapO(1)</span>
       </div>
 
       <Separator />
@@ -102,16 +102,16 @@ export function SidebarNav({
               href={href}
               onClick={isTappers ? handleTappersClick : undefined}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "skeu-nav-active text-foreground"
+                  ? "skeu-nav-active text-primary"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
               <Icon
                 className={cn(
                   "size-4 shrink-0 transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground",
+                  isActive ? "text-primary" : "text-muted-foreground",
                 )}
               />
               {label}
@@ -154,7 +154,7 @@ export function SidebarNav({
                 aria-label="Open account menu"
               >
                 {/* Avatar */}
-                <div className="relative flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold ring-1 ring-border/30 transition-shadow group-hover:ring-border/60">
+                <div className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold ring-1 ring-border/30 transition-shadow group-hover:ring-border/60">
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">

@@ -6,7 +6,6 @@ const LOOPBACK_HOSTNAMES = new Set(["localhost", "localhost."]);
 const INTERNAL_HOST_SUFFIXES = [".localhost", ".internal", ".local"];
 const METADATA_HOSTNAMES = new Set(["metadata.google.internal"]);
 
-const MOODLE_EXPORT_PATHS = ["/calendar/export", "/calendar/export_execute"];
 
 export interface CorsConfig {
   allowedOrigins: string[];
@@ -108,10 +107,6 @@ export function validateUvecUrl(
     if (!resolvedIp || isBlockedIp(resolvedIp)) {
       return { allowed: false, reason: "blocked-resolved-ip", hostname };
     }
-  }
-
-  if (!MOODLE_EXPORT_PATHS.some((path) => parsed.pathname.includes(path))) {
-    return { allowed: false, reason: "invalid-path", hostname };
   }
 
   return { allowed: true, hostname };

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -46,11 +48,16 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function LoginCard({ error, next }: { error?: string; next?: string }) {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? error) : null;
 
-  async function handleSignIn() {
+  async function handleGoogleSignIn() {
     setIsPending(true);
 
     // Use the BROWSER Supabase client so the PKCE code verifier is stored
@@ -86,6 +93,28 @@ export function LoginCard({ error, next }: { error?: string; next?: string }) {
     }
   }
 
+  async function handleEmailSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setIsPending(true);
+    setEmailError(null);
+
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setEmailError("Invalid email or password.");
+      setIsPending(false);
+      return;
+    }
+
+    // signInWithPassword stores session in cookies via createBrowserClient.
+    // Middleware reads them on next request — no refresh() needed.
+    router.push("/onboarding");
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -103,20 +132,80 @@ export function LoginCard({ error, next }: { error?: string; next?: string }) {
         )}
 
         <Button
-          onClick={handleSignIn}
+          onClick={handleGoogleSignIn}
           disabled={isPending}
           size="lg"
           className="w-full gap-3"
           variant="outline"
         >
           <GoogleIcon className="h-5 w-5" />
-          {isPending ? "Redirecting..." : "Sign in with Google"}
+          {isPending && !showEmail ? "Redirecting..." : "Sign in with Google"}
         </Button>
 
-        <p className="text-muted-foreground text-center text-xs">
-          We&apos;ll request access to your Google Classroom courses to
-          aggregate your tasks. Your data stays private.
-        </p>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card text-muted-foreground px-2">or</span>
+          </div>
+        </div>
+
+        {!showEmail ? (
+          <button
+            type="button"
+            onClick={() => setShowEmail(true)}
+            className="text-muted-foreground hover:text-foreground text-center text-sm transition-colors"
+          >
+            Sign in with email
+          </button>
+        ) : (
+          <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
+            {emailError && (
+              <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm">
+                {emailError}
+              </div>
+            )}
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isPending}
+              autoComplete="email"
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isPending}
+              autoComplete="current-password"
+            />
+            <Button type="submit" disabled={isPending} size="lg" className="w-full">
+              {isPending ? "Signing in..." : "Sign in"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowEmail(false);
+                setEmailError(null);
+              }}
+              className="text-muted-foreground hover:text-foreground text-center text-xs transition-colors"
+            >
+              Back to Google sign in
+            </button>
+          </form>
+        )}
+
+        {!showEmail && (
+          <p className="text-muted-foreground text-center text-xs">
+            We&apos;ll request access to your Google Classroom courses to
+            aggregate your tasks. Your data stays private.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
