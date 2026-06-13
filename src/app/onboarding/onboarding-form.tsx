@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { saveUvecIcalUrl } from "@/lib/actions/auth";
 import { uvecIcalUrlSchema } from "@/lib/validations/auth";
-import { createInvite } from "@/lib/actions/tappers";
+import { createInvite, markTappersAnnouncementSeen } from "@/lib/actions/tappers";
+import { TAPPERS_ANNOUNCE_STORAGE_KEY } from "@/components/tappers/tappers-announcement-modal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -217,9 +218,10 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
   const [error, setError] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(true);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [submitState, setSubmitState] = useState<"idle" | "saving" | "success">(
-    "idle",
-  );
+  const [submitState, setSubmitState] = useState<
+    "idle" | "verifying" | "saving" | "success"
+  >("idle");
+  const [eventCount, setEventCount] = useState<number | null>(null);
   const [currentView, setCurrentView] = useState<"uvec" | "tappers">("uvec");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [generateCodePending, startGenerateCodeTransition] = useTransition();
@@ -231,7 +233,11 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
   const activeStep =
     currentView === "tappers"
       ? 3
-      : isUrlValid || submitState === "saving" || submitState === "success" || isPending
+      : isUrlValid ||
+          submitState === "verifying" ||
+          submitState === "saving" ||
+          submitState === "success" ||
+          isPending
         ? 3
         : 2;
 
@@ -241,7 +247,11 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
       state = "complete";
     } else if (s.step === 2) {
       state =
-        isUrlValid || currentView === "tappers"
+        isUrlValid ||
+        currentView === "tappers" ||
+        submitState === "verifying" ||
+        submitState === "saving" ||
+        submitState === "success"
           ? "complete"
           : activeStep === 2
             ? "active"
@@ -270,7 +280,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
       return;
     }
 
-    setSubmitState("saving");
+    setSubmitState("verifying");
 
     startTransition(async () => {
       const response = await saveUvecIcalUrl(result.data);
@@ -281,8 +291,9 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
         return;
       }
 
+      setEventCount(response.eventCount ?? null);
       setSubmitState("success");
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       setCurrentView("tappers");
     });
   }
@@ -526,6 +537,13 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                     </div>
                   </div>
 
+                  {submitState === "verifying" && (
+                    <StatusBanner
+                      tone="info"
+                      title="Verifying your calendar…"
+                      description="Checking that the URL points to a real calendar feed."
+                    />
+                  )}
                   {submitState === "saving" && (
                     <StatusBanner
                       tone="info"
@@ -536,7 +554,11 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                   {submitState === "success" && (
                     <StatusBanner
                       tone="success"
-                      title="Connected"
+                      title={
+                        eventCount !== null
+                          ? `Calendar connected ✓ (${eventCount} event${eventCount === 1 ? "" : "s"} found)`
+                          : "Calendar connected ✓"
+                      }
                       description="Heading to your dashboard."
                     />
                   )}
@@ -572,6 +594,7 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                           setError(null);
                           if (submitState === "success") {
                             setSubmitState("idle");
+                            setEventCount(null);
                           }
                         }}
                         onFocus={() => setIsInputFocused(true)}
@@ -600,10 +623,14 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
                       size="lg"
                       className="shadow-primary/20 h-11 font-semibold shadow-sm transition-all duration-200 motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md motion-reduce:transform-none"
                     >
-                      {isPending || submitState === "saving" ? (
+                      {isPending ||
+                      submitState === "verifying" ||
+                      submitState === "saving" ? (
                         <>
                           <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
-                          Connecting UVEC...
+                          {submitState === "verifying"
+                            ? "Verifying…"
+                            : "Connecting UVEC…"}
                         </>
                       ) : submitState === "success" ? (
                         <>
@@ -713,7 +740,11 @@ export function OnboardingForm({ displayName }: { displayName: string }) {
         ) : (
           <button
             type="button"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => {
+              localStorage.setItem(TAPPERS_ANNOUNCE_STORAGE_KEY, "true");
+              void markTappersAnnouncementSeen();
+              router.push("/dashboard");
+            }}
             className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-150"
           >
             {generatedCode ? "Continue to dashboard" : "Skip for now"}

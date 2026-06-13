@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { markTappersAnnouncementSeen } from "@/lib/actions/tappers";
 
-const ANNOUNCE_KEY = "feature-announce-tappers-v2";
+export const TAPPERS_ANNOUNCE_STORAGE_KEY = "feature-announce-tappers-v2";
+const ANNOUNCE_KEY = TAPPERS_ANNOUNCE_STORAGE_KEY;
 const ANNOUNCE_STORE_EVENT = "tappers-announce-store";
 
 // The onboarding tour must be finished before the announcement can show.
