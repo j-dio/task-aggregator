@@ -241,7 +241,7 @@ function DashboardContent() {
   }, [courses, filters.courseId, filters.source]);
 
   return (
-    <div className="flex flex-col gap-6" {...bind}>
+    <div className="flex flex-col gap-5 lg:gap-6" {...bind}>
       <div className="lg:hidden" aria-live="polite" aria-atomic="true">
         {(isSyncing || pullDistance > 0) && (
           <p className="text-muted-foreground text-center text-xs">
@@ -263,41 +263,43 @@ function DashboardContent() {
         />
       )}
 
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          {focusMode && (
-            <p className="text-muted-foreground mt-0.5 text-[13px]">
-              Tasks due within 24 hours.
-            </p>
-          )}
+      {/* Page header + toolbar: grouped as one control unit */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">Dashboard</h1>
+            {focusMode && (
+              <p className="text-muted-foreground mt-0.5 text-[13px]">
+                Tasks due within 24 hours.
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              size="sm"
+              className="skeu-btn h-8 gap-1.5 px-3 text-[13px] font-medium text-white"
+              onClick={openNewCustomTask}
+            >
+              <Plus className="size-3.5" />
+              New task
+            </Button>
+            <FocusModeToggle
+              enabled={focusMode}
+              onToggle={() => setFocusMode(!focusMode)}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button
-            size="sm"
-            className="skeu-btn h-8 gap-1.5 px-3 text-[13px] font-medium text-white"
-            onClick={openNewCustomTask}
-          >
-            <Plus className="size-3.5" />
-            New task
-          </Button>
-          <FocusModeToggle
-            enabled={focusMode}
-            onToggle={() => setFocusMode(!focusMode)}
-          />
-        </div>
-      </div>
 
-      {/* Toolbar: view toggle (mobile) + filters in one row */}
-      <div className="flex flex-wrap items-center gap-2">
-        <ViewToggle />
-        <FilterBar courses={courses ?? []} />
+        {/* Toolbar: view toggle (mobile) + filters in one row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewToggle />
+          <FilterBar courses={courses ?? []} />
+        </div>
       </div>
 
       {/* Content */}
       {tasksLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Skeleton className="h-24 w-full" />
           <div className="flex gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -311,7 +313,7 @@ function DashboardContent() {
         </div>
       ) : tasks && tasks.length > 0 ? (
         focusMode ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {focusTasks.length > 0 ? (
               <TaskList
                 tasks={focusTasks}
@@ -326,7 +328,7 @@ function DashboardContent() {
             )}
           </div>
         ) : (
-          <>
+          <div className="flex flex-col gap-5">
             <UpNextWidget
               task={upNextTask}
               onRequestEditCustomTask={requestEditCustomTask}
@@ -359,7 +361,7 @@ function DashboardContent() {
                 onRequestEditCustomTask={requestEditCustomTask}
               />
             </ErrorBoundary>
-          </>
+          </div>
         )
       ) : hasActiveFilters && filteredEmptyCopy ? (
         <EmptyState
@@ -393,7 +395,7 @@ export default function DashboardPage() {
     <ErrorBoundary>
       <Suspense
         fallback={
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 lg:gap-6">
             <Skeleton className="h-10 w-48" />
             <Skeleton className="h-24 w-full" />
             <div className="flex gap-4">

@@ -164,43 +164,45 @@ function CalendarContent() {
   }, [today]);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-muted-foreground text-sm">
-            View tasks on their due dates.
-          </p>
+    <div className="flex flex-col gap-5 lg:gap-6">
+      {/* Page header + toolbar: grouped as one control unit */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">Calendar</h1>
+            <p className="text-muted-foreground text-sm">
+              View tasks on their due dates.
+            </p>
+          </div>
+          <Button asChild variant="secondary" size="sm" className="gap-1.5">
+            <Link
+              href={`/dashboard/share-week?week=${formatLocalDateISO(
+                mondayOf(selectedDate ?? today),
+              )}`}
+            >
+              <Share2 className="size-4" />
+              <span className="hidden sm:inline">Remind them</span>
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="outline" size="sm" className="gap-1.5">
-          <Link
-            href={`/dashboard/share-week?week=${formatLocalDateISO(
-              mondayOf(selectedDate ?? today),
-            )}`}
-          >
-            <Share2 className="size-4" />
-            <span className="hidden sm:inline">Remind them</span>
-          </Link>
-        </Button>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <ViewToggle />
-        <FilterBar courses={courses ?? []} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewToggle />
+          <FilterBar courses={courses ?? []} />
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-80 w-full" />
         </div>
       ) : (
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Calendar grid */}
           <div className="flex-1">
             {/* Month navigation */}
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-5 flex items-center justify-between">
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -230,7 +232,7 @@ function CalendarContent() {
             </div>
 
             {/* Day headers */}
-            <div className="grid grid-cols-7 gap-px border-b pb-2">
+            <div className="grid grid-cols-7 gap-px border-b pb-3">
               {DAY_HEADERS.map((d) => (
                 <div
                   key={d}
@@ -241,115 +243,117 @@ function CalendarContent() {
               ))}
             </div>
 
-            {/* Weeks */}
-            <div className="grid grid-cols-7 gap-px">
-              {grid.map((week, wi) =>
-                week.map((day, di) => {
-                  if (!day) {
+            {/* Weeks — flex column so rows expand to fill viewport height */}
+            <div className="flex min-h-[540px] flex-col lg:min-h-[600px]">
+              {grid.map((week, wi) => (
+                <div key={`week-${wi}`} className="grid flex-1 grid-cols-7 gap-px">
+                  {week.map((day, di) => {
+                    if (!day) {
+                      return (
+                        <div
+                          key={`blank-${wi}-${di}`}
+                          className="border-b p-1"
+                        />
+                      );
+                    }
+
+                    const dayTasks = getTaskCountForDay(day, tasks ?? []);
+                    const summary = summarizeDayTasks(dayTasks);
+                    const isToday = isSameDay(day, today);
+                    const isSelected =
+                      selectedDate !== null && isSameDay(day, selectedDate);
+
                     return (
-                      <div
-                        key={`blank-${wi}-${di}`}
-                        className="min-h-16 border-b p-1"
-                      />
-                    );
-                  }
-
-                  const dayTasks = getTaskCountForDay(day, tasks ?? []);
-                  const summary = summarizeDayTasks(dayTasks);
-                  const isToday = isSameDay(day, today);
-                  const isSelected =
-                    selectedDate !== null && isSameDay(day, selectedDate);
-
-                  return (
-                    <button
-                      key={day.toISOString()}
-                      type="button"
-                      onClick={() => setSelectedDate(day)}
-                      aria-label={`${day.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}: ${summary.todoCount} to do, ${summary.inProgressCount} in progress, ${summary.doneCount} done`}
-                      className={cn(
-                        "hover:bg-accent/50 min-h-16 border-b p-1 text-left transition-colors",
-                        isSelected && "bg-accent",
-                      )}
-                    >
-                      <span
+                      <button
+                        key={day.toISOString()}
+                        type="button"
+                        onClick={() => setSelectedDate(day)}
+                        aria-label={`${day.toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}: ${summary.todoCount} to do, ${summary.inProgressCount} in progress, ${summary.doneCount} done`}
                         className={cn(
-                          "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
-                          isToday && "bg-primary text-primary-foreground",
-                          !isToday && isSelected && "bg-accent-foreground/10",
+                          "hover:bg-accent/50 border-b p-1.5 text-left transition-colors",
+                          isSelected && "bg-accent",
                         )}
                       >
-                        {day.getDate()}
-                      </span>
-                      {summary.totalCount > 0 && (
-                        <div className="mt-1 flex items-center gap-1">
-                          <span
-                            className={cn(
-                              "h-1.5 rounded-full bg-info/70",
-                              summary.todoCount > 0 ? "w-3" : "w-1.5 opacity-30",
-                            )}
-                            title={`${summary.todoCount} to do`}
-                          />
-                          <span
-                            className={cn(
-                              "h-1.5 rounded-full bg-warning/70",
-                              summary.inProgressCount > 0
-                                ? "w-3"
-                                : "w-1.5 opacity-30",
-                            )}
-                            title={`${summary.inProgressCount} in progress`}
-                          />
-                          <span
-                            className={cn(
-                              "h-1.5 rounded-full bg-success/70",
-                              summary.doneCount > 0 ? "w-3" : "w-1.5 opacity-30",
-                            )}
-                            title={`${summary.doneCount} done`}
-                          />
-                          {summary.totalCount > 3 && (
-                            <span className="text-muted-foreground text-[10px]">
-                              {summary.totalCount}
-                            </span>
+                        <span
+                          className={cn(
+                            "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
+                            isToday && "bg-primary text-primary-foreground",
+                            !isToday && isSelected && "bg-accent-foreground/10",
                           )}
-                        </div>
-                      )}
-                      {dayTasks.length > 0 && (
-                        <div className="mt-0.5 flex flex-wrap gap-0.5">
-                          {dayTasks.slice(0, 3).map((t) => (
+                        >
+                          {day.getDate()}
+                        </span>
+                        {summary.totalCount > 0 && (
+                          <div className="mt-1 flex items-center gap-1">
                             <span
-                              key={t.id}
                               className={cn(
-                                "block truncate rounded px-1 text-[10px] leading-4",
-                                getDayChipClasses(t),
+                                "h-1.5 rounded-full bg-info/70",
+                                summary.todoCount > 0 ? "w-3" : "w-1.5 opacity-30",
                               )}
-                              title={t.title}
-                            >
-                              {t.title}
-                            </span>
-                          ))}
-                          {dayTasks.length > 3 && (
-                            <span className="text-muted-foreground text-[10px]">
-                              +{dayTasks.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  );
-                }),
-              )}
+                              title={`${summary.todoCount} to do`}
+                            />
+                            <span
+                              className={cn(
+                                "h-1.5 rounded-full bg-warning/70",
+                                summary.inProgressCount > 0
+                                  ? "w-3"
+                                  : "w-1.5 opacity-30",
+                              )}
+                              title={`${summary.inProgressCount} in progress`}
+                            />
+                            <span
+                              className={cn(
+                                "h-1.5 rounded-full bg-success/70",
+                                summary.doneCount > 0 ? "w-3" : "w-1.5 opacity-30",
+                              )}
+                              title={`${summary.doneCount} done`}
+                            />
+                            {summary.totalCount > 3 && (
+                              <span className="text-muted-foreground text-[10px]">
+                                {summary.totalCount}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {dayTasks.length > 0 && (
+                          <div className="mt-0.5 flex flex-wrap gap-0.5">
+                            {dayTasks.slice(0, 3).map((t) => (
+                              <span
+                                key={t.id}
+                                className={cn(
+                                  "block truncate rounded px-1 text-[10px] leading-4",
+                                  getDayChipClasses(t),
+                                )}
+                                title={t.title}
+                              >
+                                {t.title}
+                              </span>
+                            ))}
+                            {dayTasks.length > 3 && (
+                              <span className="text-muted-foreground text-[10px]">
+                                +{dayTasks.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Side panel — tasks for selected date; hidden on mobile until a date is picked */}
-          <div className={cn("w-full shrink-0 lg:w-80", !selectedDate && "hidden lg:block")}>
+          <div className={cn("w-full shrink-0 lg:w-80 lg:border-l lg:pl-6", !selectedDate && "hidden lg:block")}>
             {selectedDate ? (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold">
+                <h3 className="text-base font-black">
                   {selectedDate.toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "short",
@@ -363,6 +367,20 @@ function CalendarContent() {
                     No tasks due this day.
                   </p>
                 )}
+                <Button
+                  asChild
+                  size="sm"
+                  className="skeu-btn mt-4 w-full gap-1.5 text-[13px] font-medium text-white"
+                >
+                  <Link
+                    href={`/dashboard/share-week?week=${formatLocalDateISO(
+                      mondayOf(selectedDate),
+                    )}`}
+                  >
+                    <Share2 className="size-3.5" />
+                    Share this week
+                  </Link>
+                </Button>
               </div>
             ) : (
               <EmptyState
@@ -382,7 +400,7 @@ export default function CalendarPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5 lg:gap-6">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-80 w-full" />
         </div>
