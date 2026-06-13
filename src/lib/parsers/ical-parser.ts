@@ -7,11 +7,13 @@ import ical from "ical.js";
 
 const MAX_ICAL_SIZE = 5 * 1024 * 1024; // 5MB
 
+const UTC_ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
 const ICalEventSchema = z.object({
   external_id: z.string(),
   title: z.string(),
   description: z.string().optional(),
-  due_date: z.string(),
+  due_date: z.string().regex(UTC_ISO_RE, "due_date must be a UTC ISO 8601 datetime"),
   type: z.enum(["assignment", "quiz", "exam", "event"]),
 });
 
@@ -80,6 +82,46 @@ function extractCourseId(
   return null;
 }
 
+// All-day or no-time dates are treated as end-of-day in Philippine Standard Time
+// (UTC+8 = 23:59:59+08:00 = 15:59:59Z) so they sort after timed events on the same
+// day and don't show as overdue until after midnight PH time.
+const PH_EOD_SUFFIX = "T15:59:59.000Z";
+
+function normalizeDtstart(dtstart: unknown): string | null {
+  if (dtstart === null || dtstart === undefined) return null;
+
+  if (typeof dtstart === "object") {
+    const t = dtstart as { isDate?: boolean; toString(): string; toJSDate?(): Date };
+    if (t.isDate) {
+      // DTSTART;VALUE=DATE — extract "YYYY-MM-DD" and apply end-of-day UTC+8
+      const raw = t.toString(); // "2026-06-12" or "20260612"
+      const match = raw.match(/^(\d{4})-?(\d{2})-?(\d{2})$/);
+      if (!match) return null;
+      return `${match[1]}-${match[2]}-${match[3]}${PH_EOD_SUFFIX}`;
+    }
+    // Timed event: use toJSDate() so ical.js handles TZID / UTC flags correctly
+    if (typeof t.toJSDate === "function") {
+      return t.toJSDate().toISOString();
+    }
+    // Fallback: already has Z → fine; otherwise return as-is for Zod to reject
+    return t.toString();
+  }
+
+  if (typeof dtstart === "string") {
+    // Compact all-day: "20260612"
+    if (/^\d{8}$/.test(dtstart)) {
+      return `${dtstart.slice(0, 4)}-${dtstart.slice(4, 6)}-${dtstart.slice(6, 8)}${PH_EOD_SUFFIX}`;
+    }
+    // ISO date-only: "2026-06-12"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dtstart)) {
+      return `${dtstart}${PH_EOD_SUFFIX}`;
+    }
+    return dtstart;
+  }
+
+  return null;
+}
+
 export interface ICalParseResult {
   tasks: ParsedTask[];
   errors: string[];
@@ -136,7 +178,7 @@ export function parseICal(ics: string): ICalParseResult {
         external_id: String(uid),
         title: summaryStr,
         description: descStr ?? undefined,
-        due_date: typeof dtstart === "string" ? dtstart : dtstart.toString(),
+        due_date: normalizeDtstart(dtstart) ?? "",
         type: normalizeType(categoryStr?.toLowerCase() ?? undefined),
       });
 

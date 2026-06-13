@@ -52,11 +52,15 @@ function formatDueDate(
   const y = dueDate.year.toString().padStart(4, "0");
   const m = dueDate.month.toString().padStart(2, "0");
   const d = dueDate.day.toString().padStart(2, "0");
-  if (!dueTime) return `${y}-${m}-${d}`;
+  if (!dueTime) {
+    // No time component: treat as end-of-day in UTC+8 (23:59:59+08:00 = 15:59:59Z)
+    return `${y}-${m}-${d}T15:59:59.000Z`;
+  }
   const h = dueTime.hours.toString().padStart(2, "0");
   const min = dueTime.minutes.toString().padStart(2, "0");
   const s = (dueTime.seconds ?? 0).toString().padStart(2, "0");
-  return `${y}-${m}-${d}T${h}:${min}:${s}`;
+  // dueTime is UTC per Google Classroom API
+  return `${y}-${m}-${d}T${h}:${min}:${s}Z`;
 }
 
 /**
