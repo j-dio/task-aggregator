@@ -195,7 +195,7 @@ export function ActionBoard({
       measuring={{ droppable: { strategy: MeasuringStrategy.WhileDragging } }}
       autoScroll={{ layoutShiftCompensation: false, threshold: { x: 0.2, y: 0.2 } }}
     >
-      <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:px-0">
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-4 lg:mx-0 lg:gap-5 lg:px-0">
         <Column
           id="todo"
           title="To Do"
