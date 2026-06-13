@@ -76,10 +76,8 @@ describe("validateUvecUrl", () => {
     expect(result.reason).toBe("blocked-resolved-ip");
   });
 
-  it("requires a Moodle calendar export path", () => {
-    expect(validateUvecUrl("https://uvec.edu.example/grades").reason).toBe(
-      "invalid-path",
-    );
+  it("allows any path on a public HTTPS host", () => {
+    expect(validateUvecUrl("https://uvec.edu.example/grades").allowed).toBe(true);
   });
 });
 
