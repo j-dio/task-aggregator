@@ -162,6 +162,35 @@ describe("extractCourseId — via parseICal", () => {
   });
 });
 
+describe("parseICal — due date normalization", () => {
+  it("normalizes all-day event (DTSTART;VALUE=DATE) to end-of-day UTC+8", () => {
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "BEGIN:VEVENT",
+      "UID:allday-1",
+      "SUMMARY:All Day Assignment",
+      "DTSTART;VALUE=DATE:20260612",
+      "CATEGORIES:assignment",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\n");
+    const { tasks, errors } = parseICal(ics);
+    expect(errors).toHaveLength(0);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].dueDate).toBe("2026-06-12T15:59:59.000Z");
+  });
+
+  it("normalizes UTC timed event to ISO UTC string", () => {
+    const ics = makeVCalendar(
+      makeVEvent({ uid: "timed-1", summary: "Timed Event", dtstart: "20260612T090000Z", categories: "event" }),
+    );
+    const { tasks, errors } = parseICal(ics);
+    expect(errors).toHaveLength(0);
+    expect(tasks[0].dueDate).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/);
+  });
+});
+
 describe("parseICal", () => {
   it("parses .ics text into ParsedTask[]", () => {
     const { tasks, errors } = parseICal(sampleICS);
